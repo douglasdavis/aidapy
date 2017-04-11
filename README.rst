@@ -3,13 +3,13 @@ aidapy
 ======
 
 
-AIDA python library
+AIDA (An Inclusive Dilepton Analysis) python library
 
 
 Description
 ===========
 
-Under construction
+Under construction. More documentation to come.
 
 Setup
 =====
@@ -32,6 +32,11 @@ In a local environment we can simply use ``pip``:
    $ pip install .
 
 Or just set add this directory to your python path.
+
+Documentation
+=============
+
+API documentation can be found here: http://cern.ch/ddavis/aidapy/api/aidapy.html
 
 Note
 ====
