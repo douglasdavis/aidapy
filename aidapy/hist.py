@@ -45,11 +45,11 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
 
     Returns
     -------
-    hist : numpy array
+    hist : numpy.ndarray
         NumPy array with bin heights
-    edges : list of numpy arrays
+    edges : list of numpy.ndarray
         A list of arrays. One for each axis' bin edges
-    sumw2 : numpy array
+    sumw2 : numpy.ndarray
         NumPy array of sqrt(sum(weights squared))
     """
     if isinstance(hist, ROOT.TH1F):
@@ -152,7 +152,7 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     jsonfile : the input json file
     outfilename : the output ROOT file name
     tree_name : AIDA tree suffix (nominal, EG_RESOLUTION_ALL__1up, etc)
-         if ALL, use run on all systematic trees defined in meta.py
+         if ALL, use on all systematic trees defined in meta.py
     """
     if tree_name == 'ALL':
         json2hists(jsonfile,outfilename,'nominal')
