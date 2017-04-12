@@ -8,8 +8,9 @@ if [ -z "$ROOTCOREBIN" ]; then
     lsetup 'sft releases/LCG_88/matplotlib/1.5.1'
     lsetup 'sft releases/LCG_88/setuptools/20.1.1'
 
-    AIDAPYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    export AIDAPYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     export PYTHONPATH=$PYTHONPATH:$AIDAPYDIR
+    export PATH=$PATH:$AIDAPYDIR/scripts
 else
     echo "Error: ROOTCOREBIN is set."
     echo "Due to RootCore's ROOT version, we can't use root_numpy."
