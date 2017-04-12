@@ -48,7 +48,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.doctest', 'sphinx.ext.ifconfig', 'sphinx.ext.imgmath',
               'sphinx.ext.napoleon']
 
-autodoc_mock_imports = ['ROOT']
+autodoc_mock_imports = ['ROOT','root_numpy']
 
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"

@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import logging
 
 def configure_logging():
+    """
+    Configure some useful and colorful logging messages
+    """
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logging.basicConfig(format="%(levelname)-8s\033[1m%(name)-21s\033[0m: %(message)s")
