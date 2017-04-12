@@ -5,8 +5,8 @@ Handling AIDA histograms
 
 import json
 import math
-import ROOT
 from collections import namedtuple
+
 import logging
 from .logger import configure_logging
 configure_logging()
@@ -19,7 +19,76 @@ from .meta import _systematic_singles
 from .meta import _systematic_ud_prefixes
 
 import numpy as np
-from root_numpy import hist2array
+
+import ROOT
+
+def hist2array(hist, include_overflow=False, copy=True, return_edges=False, return_err=False):
+    """
+    This algorithm is Copyright (c) 2012-2017, The root_numpy developers
+    See disclaimer here: https://github.com/scikit-hep/root_numpy/blob/master/LICENSE
+
+    This function is a small clone of root_numpy.hist2array for 1D histograms
+    https://github.com/scikit-hep/root_numpy/blob/master/root_numpy/_hist.py
+
+    Parameters
+    ----------
+    hist : ROOT TH1
+        The ROOT histogram to convert
+    include_overflow: bool, optional (default=False)
+        If true, the over and underflow bins will be part of the array
+    copy : bool, optional (default=True)
+        If true copy the underlying array to own its memory
+    return_edges : bool, optional (default=False)
+        If true, return bin edges
+    return_err : bool, optional (default=False)
+        If true, return the sqrt(sum(weights squared))
+
+    Returns
+    -------
+    hist : numpy array
+        NumPy array with bin heights
+    edges : list of numpy arrays
+        A list of arrays. One for each axis' bin edges
+    sumw2 : numpy array
+        NumPy array of sqrt(sum(weights squared))
+    """
+    if isinstance(hist, ROOT.TH1F):
+        dtype = 'f4'
+    elif isinstance(hist, ROOT.TH1D):
+        dtype = 'f8'
+    else:
+        raise TypeError('Must be ROOT.TH1F or ROOT.TH1D!')
+    shape = (hist.GetNbinsX() +2,)
+    array = np.ndarray(shape=shape, dtype=dtype, buffer=hist.GetArray())
+    if return_err:
+        error = np.sqrt(np.ndarray(shape=shape, dtype='f8',
+                                   buffer=hist.GetSumw2().GetArray()))
+    axis_getters, simple_hist, edges = ['GetXaxis'], True, []
+    for idim, axis_getter in zip(range(1), axis_getters):
+        ax = getattr(hist, axis_getter)(*(() if simple_hist else (idim,)))
+        edges.append(np.empty(ax.GetNbins() + 1, dtype=np.double))
+        ax.GetLowEdge(edges[-1])
+        edges[-1][-1] = ax.GetBinUpEdge(ax.GetNbins())
+    if not include_overflow:
+        array = array[tuple([slice(1, -1) for idim in range(array.ndim)])]
+        if return_err:
+            error = error[tuple([slice(1, -1) for idim in range(error.ndim)])]
+
+    array = np.transpose(array)
+    if copy:
+        array = np.copy(array)
+    if return_err:
+        error = np.transpose(error)
+        if copy:
+            error = np.copy(error)
+
+    if return_edges and return_err:
+        return array, edges, error
+    if return_edges:
+        return array, edges
+    if return_err:
+        return array, error
+    return array
 
 def shift_overflow(hist):
     """
@@ -186,7 +255,7 @@ def totalsyshist(root_file, hist_name=None, proc_names=['ttbar','Wt','WW','Zjets
             for ud2 in updown:
                 arr = hist2array(root_file.Get('AIDA_'+ud+ud2+pname+'_'+hist_name))
                 total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
-        # the one sided systematics in trees
+        # the one sided systematics in trees, symmetrize it
         for osed in _systematic_singles:
             arr = hist2array(root_file.Get('AIDA_'+osed+'/'+pname+'_'+hist_name))
             total_band = total_band + 2*(proc_nom-arr)*(proc_nom-arr)
