@@ -2,7 +2,7 @@
 
 import sys, os
 AIDAPYDIR = str(os.environ.get('AIDAPYDIR'))
-print AIDAPYDIR
+
 import argparse
 parser = argparse.ArgumentParser(
     description='AIDA histogramming and plotting'

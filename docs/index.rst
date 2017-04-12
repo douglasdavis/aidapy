@@ -13,7 +13,6 @@ Contents
 
    README <readme>
    License <license>
-   Authors <authors>
    Module Reference <api/modules>
 
 

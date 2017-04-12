@@ -24,7 +24,7 @@ To set up in an environment connected with ATLAS ``cvmfs`` directories
 
 .. code-block:: bash
 
-   $ source lxsetup.sh
+   $ source config/lxsetup.sh
 
 This will simply set up a proper python path and set up some extra
 python packages through the ``sft.cern.ch`` ``cvmfs`` area.
@@ -33,7 +33,7 @@ In a local environment
 
 .. code-block:: bash
 
-   $ source locsetup.sh
+   $ source config/locsetup.sh
 
 This will set up the proper python path and executable path. You must
 have ROOT, numpy, scipy, and matplotlib installed.

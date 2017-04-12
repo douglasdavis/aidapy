@@ -11,6 +11,7 @@ lsetup 'sft releases/LCG_88/numpy/1.11.0'
 lsetup 'sft releases/LCG_88/scipy/0.18.1'
 lsetup 'sft releases/LCG_88/matplotlib/1.5.1'
 lsetup 'sft releases/LCG_88/setuptools/20.1.1'
-export AIDAPYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export AIDAPYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 export PYTHONPATH=$PYTHONPATH:$AIDAPYDIR
 export PATH=$PATH:$AIDAPYDIR/scripts
