@@ -1,4 +1,5 @@
 # Add your requirements here like:
-# numpy
-# scipy>=0.9
-
+numpy>=1.10
+root_numpy>=4.6
+scipy>=0.15
+matplotlib>=1.5.1
