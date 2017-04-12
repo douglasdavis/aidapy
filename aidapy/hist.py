@@ -169,7 +169,7 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
                         '\t| cut: '+hist['cut'])
         hists[hist['name']] = _histProps._make([hist['var'],hist['bins'],hist['cut']])
     lumi       = topJson['lumi']
-    proc_names = [ent.split('_')[0] for ent in topJson['dsids']] + ['Fakes']
+    proc_names = [ent.split('_')[0] for ent in topJson['procs']] + ['Fakes']
     dsids      = { entry : get_dsids(entry) for entry in topJson['dsids'] }
     chains     = { entry : ROOT.TChain('AIDA_'+tree_name) for entry in dsids }
     chains['Fakes'] = ROOT.TChain('AIDAfk_'+tree_name)
