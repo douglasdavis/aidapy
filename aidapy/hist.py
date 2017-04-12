@@ -63,12 +63,13 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
     if return_err:
         error = np.sqrt(np.ndarray(shape=shape, dtype='f8',
                                    buffer=hist.GetSumw2().GetArray()))
-    axis_getters, simple_hist, edges = ['GetXaxis'], True, []
-    for idim, axis_getter in zip(range(1), axis_getters):
-        ax = getattr(hist, axis_getter)(*(() if simple_hist else (idim,)))
-        edges.append(np.empty(ax.GetNbins() + 1, dtype=np.double))
-        ax.GetLowEdge(edges[-1])
-        edges[-1][-1] = ax.GetBinUpEdge(ax.GetNbins())
+    if return_edges:
+        axis_getters, simple_hist, edges = ['GetXaxis'], True, []
+        for idim, axis_getter in zip(range(1), axis_getters):
+            ax = getattr(hist, axis_getter)(*(() if simple_hist else (idim,)))
+            edges.append(np.empty(ax.GetNbins() + 1, dtype=np.double))
+            ax.GetLowEdge(edges[-1])
+            edges[-1][-1] = ax.GetBinUpEdge(ax.GetNbins())
     if not include_overflow:
         array = array[tuple([slice(1, -1) for idim in range(array.ndim)])]
         if return_err:
