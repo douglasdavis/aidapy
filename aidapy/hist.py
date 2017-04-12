@@ -135,7 +135,7 @@ def tree2hist(tree,hist_name,binning,var,cut,overflow=False):
         raise TypeError("Must be ROOT TTree or TChain")
 
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
-    tree.Draw(var+'>>'+hist_name+bin_str, cut)
+    tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
     hist = ROOT.gDirectory.Get(hist_name)
     if overflow:
         shift_overflow(hist)
@@ -238,7 +238,9 @@ def totalsyshist(root_file, hist_name=None, proc_names=['ttbar','Wt','WW','Zjets
     if hist_name is None:
         logger.error('Why no histogram name?')
         exit()
-
+    if 'AIDA_nominal' not in root_file.GetListOfKeys():
+        logger.error('Have to have the nominal histograms')
+        exit()
     nominals   = { pname : root_file.Get('AIDA_nominal/'+pname+'_'+hist_name) for pname in proc_names }
     nominals   = { pname : hist2array(h,return_edges=True) for pname, h in nominals.iteritems() }
     edges      = nominals['ttbar'][1][0]
@@ -251,13 +253,19 @@ def totalsyshist(root_file, hist_name=None, proc_names=['ttbar','Wt','WW','Zjets
         proc_nom = nominals[pname][0]
         # the two sided systematics in trees
         for ud in _systematic_ud_prefixes:
-            if 'MET_Soft' in ud: updown = ['Up/','Down/'] # why does MET use different name... lame
-            else:                updown = ['__1up/','__1down/']
+            if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
+            else:                updown = ['__1up','__1down']
             for ud2 in updown:
-                arr = hist2array(root_file.Get('AIDA_'+ud+ud2+pname+'_'+hist_name))
+                if 'AIDA_'+ud+ud2 not in root_file.GetListOfKeys():
+                    logger.warning('AIDA_'+ud+ud2+' systematic not available for process '+pname+'!')
+                    continue
+                arr = hist2array(root_file.Get('AIDA_'+ud+ud2+'/'+pname+'_'+hist_name))
                 total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
         # the one sided systematics in trees, symmetrize it
         for osed in _systematic_singles:
+            if 'AIDA_'+osed not in root_file.GetListOfKeys():
+                logger.warning('AIDA_'+osed+' systematic not available!')
+                continue
             arr = hist2array(root_file.Get('AIDA_'+osed+'/'+pname+'_'+hist_name))
             total_band = total_band + 2*(proc_nom-arr)*(proc_nom-arr)
         # the hists from weights
