@@ -27,4 +27,4 @@ if args.gen_hists:
     aph.json2hists(args.json_file,outfilename=args.out_file,tree_name=args.tree_name)
 
 if args.tests:
-    print aph.totalsyshist(ROOT.TFile('aida_histograms.root','READ'),'met_0j')
+    print aph.total_systematic_histogram(ROOT.TFile('aida_histograms.root','READ'),'met_0j')

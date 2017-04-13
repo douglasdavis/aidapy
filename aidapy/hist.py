@@ -21,6 +21,8 @@ from .meta import _systematic_ud_prefixes
 import numpy as np
 
 import ROOT
+ROOT.gROOT.SetBatch(True)
+ROOT.TH1.SetDefaultSumw2()
 
 def hist2array(hist, include_overflow=False, copy=True, return_edges=False, return_err=False):
     """
@@ -49,7 +51,7 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
         NumPy array with bin heights
     edges : list of numpy.ndarray
         A list of arrays. One for each axis' bin edges
-    sumw2 : numpy.ndarray
+    error : numpy.ndarray
         NumPy array of sqrt(sum(weights squared))
     """
     if isinstance(hist, ROOT.TH1F):
@@ -111,7 +113,7 @@ def shift_overflow(hist):
     hist.SetBinContent(nb+1, 0.0)
     hist.SetBinError(nb+1, 0.0)
 
-def tree2hist(tree,hist_name,binning,var,cut,overflow=False):
+def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     """
     A function to create a histogram using TTree::Draw()
 
@@ -129,8 +131,6 @@ def tree2hist(tree,hist_name,binning,var,cut,overflow=False):
         The ROOT histogram created
 
     """
-    ROOT.gROOT.SetBatch(True)
-    ROOT.TH1.SetDefaultSumw2()
     if not isinstance(tree, ROOT.TTree):
         raise TypeError("Must be ROOT TTree or TChain")
 
@@ -214,7 +214,8 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     out.Close()
     return True
 
-def totalsyshist(root_file, hist_name=None, proc_names=['ttbar','Wt','WW','Zjets','Diboson','Fakes']):
+def total_systematic_histogram(root_file, hist_name=None,
+                               proc_names=['ttbar','Wt','WW','Zjets','Diboson','Fakes']):
     """
     A function to calculate and return a histogram with a total
     systematic error band in numpy format.
