@@ -79,7 +79,8 @@ required ingredients:
 
 - ``procs``: List of processes to generate histograms for.
 
-  - See list of available here: TBD
+  - See list of available here:
+    http://ddavis.web.cern.ch/ddavis/aidapy/api.html#aidapy.meta.get_dsids
 
 - ``datafiles``: List of ROOT files containing real data AIDA ntuples
 - ``mcpath``: path to a directory containing MC files, the files **must be named <dsid>.root**
@@ -111,4 +112,4 @@ To generate plots from a ROOT file containing histograms, run with the
 API Documentation
 =================
 
-API documentation can be found here: http://cern.ch/ddavis/aidapy/api/aidapy.html
+API documentation can be found here: http://ddavis.web.cern.ch/ddavis/aidapy/api.html
