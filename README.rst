@@ -22,7 +22,7 @@ https://gitlab.cern.ch/atlas-aida/aidapy
 To set up in an environment connected with ATLAS ``cvmfs`` directories
 (``lxplus`` machines or ``atl0XX`` machines at Duke).
 
-.. code-block:: bash
+.. code-block:: none
 
    $ source config/lxsetup.sh
 
@@ -31,7 +31,7 @@ python packages through the ``sft.cern.ch`` ``cvmfs`` area.
 
 In a local environment
 
-.. code-block:: bash
+.. code-block:: none
 
    $ source config/locsetup.sh
 
@@ -41,7 +41,7 @@ have ROOT, numpy, scipy, and matplotlib installed.
 To install the python library into your python site-packages (not
 necessary but yields standard python access to the aidapy API):
 
-.. code-block:: bash
+.. code-block:: none
 
    $ pip install .
 
@@ -51,7 +51,7 @@ Getting started
 After setting up aidapy, an executable script is provided for running
 different parts of the library. To see the list of options:
 
-.. code-block:: bash
+.. code-block:: none
 
    $ aida.py --help
 
@@ -65,7 +65,7 @@ TopLoop algorithm), run with the ``-g (--generate-histograms)`` option
 and specify a JSON configuration file with the ``-j (--json)``
 option. Example:
 
-.. code-block:: bash
+.. code-block:: none
 
    $ aida.py -g -j /path/to/myconfig.json
 
@@ -74,12 +74,12 @@ directory. By default all tree systematic histograms and weight
 systematic histograms are generated.
 
 
-There are example JSON configurations in the ``share`` directory. The
+There are example JSON configurations in the ``data`` directory. The
 required ingredients:
 
 - ``procs``: List of processes to generate histograms for.
 
-  - See list of available here: http://ddavis.web.cern.ch/ddavis/aidapy/api/aidapy.html#aidapy.meta.get_dsids
+  - See list of available here: TBD
 
 - ``datafiles``: List of ROOT files containing real data AIDA ntuples
 - ``mcpath``: path to a directory containing MC files, the files **must be named <dsid>.root**
@@ -91,7 +91,7 @@ should work by default (you can just copy it and add more histograms).
 
 A more detailed example:
 
-.. code-block:: bash
+.. code-block:: none
 
    $ aida.py -g -j /path/to/myconfig.json -o histograms.root -n EG_RESOLUTION_ALL__1up
 
@@ -112,9 +112,3 @@ API Documentation
 =================
 
 API documentation can be found here: http://cern.ch/ddavis/aidapy/api/aidapy.html
-
-Note
-====
-
-This project has been set up using PyScaffold 2.5.7. For details and usage
-information on PyScaffold see http://pyscaffold.readthedocs.org/.

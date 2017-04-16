@@ -1,20 +1,17 @@
-======
-aidapy
-======
+.. anakit documentation master file, created by
+   sphinx-quickstart on Sun Mar  5 10:08:14 2017.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-This is the documentation of **aidapy**.
-
-
-Contents
-========
+Analysis Toolkit (anakit)
+=========================
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-   README <readme>
-   License <license>
-   Module Reference <api/modules>
-
+   Introduction <intro>
+   api
 
 Indices and tables
 ==================

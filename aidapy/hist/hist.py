@@ -8,21 +8,19 @@ import math
 from collections import namedtuple
 
 import logging
-from .logger import configure_logging
+from .. import configure_logging
 configure_logging()
 logger  = logging.getLogger('aidapy')
 
-from .meta import get_dsids
-from .meta import _systematic_trees
-from .meta import _systematic_weights
-from .meta import _systematic_singles
-from .meta import _systematic_ud_prefixes
+from aidapy.meta import get_dsids
+from aidapy.meta import _systematic_trees
+from aidapy.meta import _systematic_weights
+from aidapy.meta import _systematic_singles
+from aidapy.meta import _systematic_ud_prefixes
 
 import numpy as np
 
 import ROOT
-ROOT.gROOT.SetBatch(True)
-ROOT.TH1.SetDefaultSumw2()
 
 def hist2array(hist, include_overflow=False, copy=True, return_edges=False, return_err=False):
     """
@@ -133,6 +131,8 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     """
     if not isinstance(tree, ROOT.TTree):
         raise TypeError("Must be ROOT TTree or TChain")
+    #ROOT.gROOT.SetBatch(True)
+    ROOT.TH1.SetDefaultSumw2()
 
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
     tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
