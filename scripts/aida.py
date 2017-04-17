@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('-g','--generate-histograms',action='store_true',dest='gen_hists',default=False,
                     help='Flag to generate histograms and store in file')
-parser.add_argument('-j','--json',type=str,dest='json_file',default=AIDAPYDIR+'/share/dukeatl.json',
+parser.add_argument('-j','--json',type=str,dest='json_file',default=AIDAPYDIR+'/data/dukeatl.json',
                     help='JSON configuration file for histogram generation')
 parser.add_argument('-n','--tree-name',type=str,dest='tree_name',default='ALL',
                     help='Name of AIDA tree to generate histograms from (ALL runs all of them)')
