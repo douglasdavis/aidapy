@@ -19,6 +19,9 @@ parser.add_argument('-t','--tests',action='store_true',dest='tests',default=Fals
                     help='Run some tests')
 
 args = parser.parse_args()
+if len(sys.argv) < 2:
+    parser.print_help()
+    exit(0)
 
 import aidapy.hist as aph
 import ROOT

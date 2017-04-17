@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Analysis Toolkit (anakit)
-=========================
+AIDA in Python (aidapy)
+=======================
 
 .. toctree::
    :maxdepth: 2
