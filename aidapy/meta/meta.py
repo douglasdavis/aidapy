@@ -17,6 +17,25 @@ _dsid_table = {
     "WW_PowPy8"        : [361600, 361606]
 }
 
+def get_proc_gen(dsid):
+    """
+    Given a DSID, get the initial state (process) and generator
+    in the form [process]_[generator]
+
+    Parameters
+    ----------
+    dsid : self evident
+
+    Returns
+    -------
+    k : str
+        the [process]_[generator] string
+    """
+    for k, v in _dsid_table.items():
+        if dsid in v:
+            return k
+    return 'Unknown'
+
 def get_dsids(key):
     """
     Get a list of DSIDs associated with a

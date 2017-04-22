@@ -1,7 +1,6 @@
 {
-    "procs" : ["ttbar_PowPy8","Wt_PowPy6","Zjets_S221","WW_PowPy8","Diboson_PowPy8","Wjets_S221"] ,
-    "datafiles" : ["/Users/ddavis/Software/LocalData/nomap29nv/data/data.root"] ,
-    "mcpath" : "/Users/ddavis/Software/LocalData/nomap29nv/mc" ,
+    "procs" : ["Data","ttbar_PowPy8","Wt_PowPy6","Zjets_S221","WW_PowPy8","Diboson_PowPy8","Wjets_S221"] ,
+    "files" : "/Users/ddavis/Software/LocalData/files.txt" ,
     "lumi" : 36.1 ,
     "histograms" : [
         {

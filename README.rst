@@ -82,8 +82,10 @@ required ingredients:
   - See list of available here:
     http://ddavis.web.cern.ch/ddavis/aidapy/api.html#aidapy.meta.get_dsids
 
-- ``datafiles``: List of ROOT files containing real data AIDA ntuples
-- ``mcpath``: path to a directory containing MC files, the files **must be named <dsid>.root**
+- ``files``: a plain text file containing a list of ROOT files
+  containing AIDA ntuples. The files listed here are not necessarily
+  all used, aidapy scans the metadata of the files and sorts through
+  them based on which processes are requests in the ``procs`` option.
 - ``lumi``: the integrated luminosity to scale the MC histograms
 - ``histograms``: list of JSON objects defining each histogram to be made.
 

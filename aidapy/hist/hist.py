@@ -13,6 +13,7 @@ configure_logging()
 logger  = logging.getLogger('aidapy')
 
 from aidapy.meta import get_dsids
+from aidapy.meta import get_proc_gen
 from aidapy.meta import _systematic_trees
 from aidapy.meta import _systematic_weights
 from aidapy.meta import _systematic_singles
@@ -102,7 +103,7 @@ def shift_overflow(hist):
 
     """
     if not isinstance(hist, ROOT.TH1):
-        raise TypeError("Argument must be 1D ROOT histogram!")
+        raise TypeError('Argument must be 1D ROOT histogram!')
     nb = hist.GetNbinsX()
     val1, val2 = hist.GetBinContent(nb+1), hist.GetBinContent(nb)
     err1, err2 = hist.GetBinError(nb+1), hist.GetBinError(nb)
@@ -130,7 +131,7 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
 
     """
     if not isinstance(tree, ROOT.TTree):
-        raise TypeError("Must be ROOT TTree or TChain")
+        raise TypeError('Must be ROOT TTree or TChain')
     #ROOT.gROOT.SetBatch(True)
     ROOT.TH1.SetDefaultSumw2()
 
@@ -141,8 +142,61 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
         shift_overflow(hist)
     return hist
 
-_histProps  = namedtuple('_histProps',['var','binning','cut'])
+def proc_gen_from_file(rootfile):
+    """
+    A function to return the initial state (proc, process) and
+    generator used
+
+    Parameters
+    ----------
+    rootfile : path to ROOT file or the ROOT file itself
+
+    Returns
+    -------
+    str
+      [process]_[generator]
+
+    """
+    if isinstance(rootfile, ROOT.TFile):
+        pass
+    elif isinstance(rootfile, str):
+        rootfile = ROOT.TFile(rootfile)
+    else:
+        raise TypeError('Must be ROOT file or path to ROOT file')
+    t = rootfile.Get('AIDA_meta')
+    t.GetEntry(0)
+    d = int(t.dsid)
+    if d == 0:
+        return 'Data'
+    return get_proc_gen(d)
+
+def sort_files_from_txt(txtfile, procs_and_gens):
+    """
+    Sort files into a dictionary based on initial state (process) and
+    generator.
+
+    Parameters
+    ----------
+    txtfile : plain text file listing the full path of all the files to sort
+    procs_and_gens : list of [process]_[generator] strings you'd like in
+      the final dictionary
+
+    Returns
+    -------
+    dict
+      Dictionary of all processes and the respective files
+    """
+    retdic = { pandg : [] for pandg in procs_and_gens }
+    with open(txtfile) as f:
+        for line in f:
+            l = line.rstrip()
+            p_gen = proc_gen_from_file(l)
+            if p_gen in retdic:
+                retdic[p_gen].append(l)
+    return retdic
+
 def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'):
+
     """
     A function to generate histograms and store them in a ROOT file
     based on a json configuration
@@ -154,13 +208,16 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     tree_name : AIDA tree suffix (nominal, EG_RESOLUTION_ALL__1up, etc)
          if ALL, use on all systematic trees defined in meta.py
     """
+
+    _histProps  = namedtuple('_histProps',['var','binning','cut'])
     if tree_name == 'ALL':
         json2hists(jsonfile,outfilename,'nominal')
         for tn in _systematic_trees:
             json2hists(jsonfile,outfilename,tn)
         return True
     topJson = json.load(open(jsonfile))
-    hists   = dict()
+    lumi    = topJson['lumi']
+    hists   = {}
     for hist in topJson['histograms']:
         if tree_name == 'nominal':
             logger.info('Histogram: '+hist['name']+
@@ -168,22 +225,17 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
                         '\t| bins: '+str(hist['bins'])+
                         '\t| cut: '+hist['cut'])
         hists[hist['name']] = _histProps._make([hist['var'],hist['bins'],hist['cut']])
-    lumi       = topJson['lumi']
-    proc_names = [ent.split('_')[0] for ent in topJson['procs']] + ['Fakes']
-    dsids      = { entry : get_dsids(entry) for entry in topJson['procs'] }
-    chains     = { entry : ROOT.TChain('AIDA_'+tree_name) for entry in dsids }
+
+    sorted_files = sort_files_from_txt(topJson['files'],topJson['procs'])
+    chains = { k.split('_')[0] : ROOT.TChain('AIDA_'+tree_name) for k in sorted_files }
     chains['Fakes'] = ROOT.TChain('AIDAfk_'+tree_name)
-    if tree_name == 'nominal':
-        chains['Data'] = ROOT.TChain('AIDA_nominal')
-        for f in topJson['datafiles']:
-            chains['Data'].Add(f)
-    for name, chain in chains.iteritems():
-        if 'Fakes' in name: continue
-        if 'Data' in name: continue
-        for d in dsids[name]:
-            adder = topJson['mcpath']+'/'+str(d)+'.root'
-            chain.Add(adder)
-            chains['Fakes'].Add(adder)
+    for k, v in sorted_files.items():
+        if k == 'Data' and tree_name != 'nominal':
+            continue
+        for vv in v:
+            chains[k.split('_')[0]].Add(vv)
+            if 'Data' not in k:
+                chains['Fakes'].Add(vv)
 
     out = ROOT.TFile(outfilename,'UPDATE')
     if 'AIDA_'+tree_name in out.GetListOfKeys():
@@ -195,6 +247,8 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     outd.cd()
     do_weight_sys = True
     for name, chain in chains.iteritems():
+        if name == 'Data' and tree_name != 'nominal':
+            continue
         for histn, props in hists.iteritems():
             weight_name = 'nomWeightwLum'
             if 'Data' in name: cut = props.cut
