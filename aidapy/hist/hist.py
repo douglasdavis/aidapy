@@ -3,9 +3,12 @@
 Handling AIDA histograms
 """
 
+from __future__ import print_function
+
 import json
 import math
 from collections import namedtuple
+from copy import copy
 
 import logging
 from .. import configure_logging
@@ -14,6 +17,8 @@ logger  = logging.getLogger('aidapy')
 
 from aidapy.meta import get_dsids
 from aidapy.meta import get_proc_gen
+from aidapy.meta import proc_gen_from_file
+from aidapy.meta import sort_files_from_txt
 from aidapy.meta import _systematic_trees
 from aidapy.meta import _systematic_weights
 from aidapy.meta import _systematic_singles
@@ -132,68 +137,13 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     """
     if not isinstance(tree, ROOT.TTree):
         raise TypeError('Must be ROOT TTree or TChain')
-    #ROOT.gROOT.SetBatch(True)
     ROOT.TH1.SetDefaultSumw2()
-
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
     tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
-    hist = ROOT.gDirectory.Get(hist_name)
+    hist = copy(ROOT.gDirectory.Get(hist_name))
     if overflow:
         shift_overflow(hist)
     return hist
-
-def proc_gen_from_file(rootfile):
-    """
-    A function to return the initial state (proc, process) and
-    generator used
-
-    Parameters
-    ----------
-    rootfile : path to ROOT file or the ROOT file itself
-
-    Returns
-    -------
-    str
-      [process]_[generator]
-
-    """
-    if isinstance(rootfile, ROOT.TFile):
-        pass
-    elif isinstance(rootfile, str):
-        rootfile = ROOT.TFile(rootfile)
-    else:
-        raise TypeError('Must be ROOT file or path to ROOT file')
-    t = rootfile.Get('AIDA_meta')
-    t.GetEntry(0)
-    d = int(t.dsid)
-    if d == 0:
-        return 'Data'
-    return get_proc_gen(d)
-
-def sort_files_from_txt(txtfile, procs_and_gens):
-    """
-    Sort files into a dictionary based on initial state (process) and
-    generator.
-
-    Parameters
-    ----------
-    txtfile : plain text file listing the full path of all the files to sort
-    procs_and_gens : list of [process]_[generator] strings you'd like in
-      the final dictionary
-
-    Returns
-    -------
-    dict
-      Dictionary of all processes and the respective files
-    """
-    retdic = { pandg : [] for pandg in procs_and_gens }
-    with open(txtfile) as f:
-        for line in f:
-            l = line.rstrip()
-            p_gen = proc_gen_from_file(l)
-            if p_gen in retdic:
-                retdic[p_gen].append(l)
-    return retdic
 
 def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'):
 
@@ -227,6 +177,9 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
         hists[hist['name']] = _histProps._make([hist['var'],hist['bins'],hist['cut']])
 
     sorted_files = sort_files_from_txt(topJson['files'],topJson['procs'])
+    for k, v in sorted_files.items():
+        for vv in v:
+            print(k,vv)
     chains = { k.split('_')[0] : ROOT.TChain('AIDA_'+tree_name) for k in sorted_files }
     chains['Fakes'] = ROOT.TChain('AIDAfk_'+tree_name)
     for k, v in sorted_files.items():
@@ -236,6 +189,7 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
             chains[k.split('_')[0]].Add(vv)
             if 'Data' not in k:
                 chains['Fakes'].Add(vv)
+                print('Fakes',vv)
 
     out = ROOT.TFile(outfilename,'UPDATE')
     if 'AIDA_'+tree_name in out.GetListOfKeys():
@@ -246,10 +200,10 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     logger.info('Writing AIDA_'+tree_name)
     outd.cd()
     do_weight_sys = True
-    for name, chain in chains.iteritems():
+    for name, chain in chains.items():
         if name == 'Data' and tree_name != 'nominal':
             continue
-        for histn, props in hists.iteritems():
+        for histn, props in hists.items():
             weight_name = 'nomWeightwLum'
             if 'Data' in name: cut = props.cut
             else: cut = str(lumi)+'*'+weight_name+'*'+props.cut
@@ -297,12 +251,12 @@ def total_systematic_histogram(root_file, hist_name=None,
         logger.error('Have to have the nominal histograms')
         exit()
     nominals   = { pname : root_file.Get('AIDA_nominal/'+pname+'_'+hist_name) for pname in proc_names }
-    nominals   = { pname : hist2array(h,return_edges=True) for pname, h in nominals.iteritems() }
+    nominals   = { pname : hist2array(h,return_edges=True) for pname, h in nominals.items() }
     edges      = nominals['ttbar'][1][0]
     nbins      = len(nominals['ttbar'][0])
     total_band = np.zeros(nbins,dtype=np.float32)
     nom_h      = np.zeros(nbins,dtype=np.float32)
-    for pname, nom in nominals.iteritems():
+    for pname, nom in nominals.items():
         nom_h = nom_h + nom[0]
     for pname in proc_names:
         proc_nom = nominals[pname][0]

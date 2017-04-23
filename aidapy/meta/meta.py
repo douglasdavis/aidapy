@@ -3,24 +3,27 @@
 Help handling ATLAS dataset IDs
 """
 
+import ROOT
+
 _dsid_table = {
-    "ttbar_PowPy8"     : [410501] ,
-    "ttbar_PowPy8_dil" : [410503] ,
-    "ttbar_PowPy6"     : [410000] ,
-    "Wt_PowPy6"        : [410015,410016] ,
-    "Zjets_S21"        : [i for i in range(361372,361444)] ,
-    "Zjets_S22"        : [i for i in range(363361,363411)] + [i for i in range(363102,363123)] ,
-    "Zjets_S221"       : [i for i in range(364100,364142)] ,
-    "Wjets_S22"        : [i for i in range(363436,363484)] + [i for i in range(363331,363354)] ,
-    "Wjets_S221"       : [i for i in range(364156,364198)] ,
-    "Diboson_PowPy8"   : [361601, 361603, 361604, 361607, 361609, 361610, 361611] ,
-    "WW_PowPy8"        : [361600, 361606]
+    'ttbar_PowPy8'     : [410501] ,
+    'ttbar_PowPy8_dil' : [410503] ,
+    'ttbar_PowPy6'     : [410000] ,
+    'Wt_PowPy6'        : [410015,410016] ,
+    'Zjets_S21'        : [i for i in range(361372,361444)] ,
+    'Zjets_S22'        : [i for i in range(363361,363411)] + [i for i in range(363102,363123)] ,
+    'Zjets_S221'       : [i for i in range(364100,364142)] ,
+    'Wjets_S22'        : [i for i in range(363436,363484)] + [i for i in range(363331,363354)] ,
+    'Wjets_S221'       : [i for i in range(364156,364198)] ,
+    'Diboson_PowPy8'   : [361601, 361603, 361604, 361607, 361609, 361610, 361611] ,
+    'WW_PowPy8'        : [361600, 361606]
 }
 
 def get_proc_gen(dsid):
     """
-    Given a DSID, get the initial state (process) and generator
-    in the form [process]_[generator]
+    Given a DSID, get the initial state (process) and generator in the
+    form [process]_[generator]. The available combinations are listed
+    in the get_dsids function documentation.
 
     Parameters
     ----------
@@ -30,6 +33,7 @@ def get_proc_gen(dsid):
     -------
     k : str
         the [process]_[generator] string
+
     """
     for k, v in _dsid_table.items():
         if dsid in v:
@@ -64,23 +68,76 @@ def get_dsids(key):
         List of DSIDs associated with the key
     """
     if key not in _dsid_table:
-        raise ValueError(str(key)+" not Available")
+        raise ValueError(str(key)+' not Available')
     else:
         return _dsid_table[key]
 
+def proc_gen_from_file(rootfile):
+    """
+    A function to return the initial state (process) and
+    generator associated with a ROOT file.
+
+    Parameters
+    ----------
+    rootfile : path to ROOT file _or_ the ROOT file itself
+
+    Returns
+    -------
+    str
+      [process]_[generator]
+
+    """
+    if isinstance(rootfile, ROOT.TFile):
+        pass
+    elif isinstance(rootfile, str):
+        rootfile = ROOT.TFile(rootfile)
+    else:
+        raise TypeError('Must be ROOT file or path to ROOT file')
+    t = rootfile.Get('AIDA_meta')
+    t.GetEntry(0)
+    d = int(t.dsid)
+    if d == 0:
+        return 'Data'
+    return get_proc_gen(d)
+
+def sort_files_from_txt(txtfile, procs_and_gens):
+    """
+    Sort files into a dictionary based on initial state (process) and
+    generator.
+
+    Parameters
+    ----------
+    txtfile : plain text file listing the full path of all the files to sort
+    procs_and_gens : list of [process]_[generator] strings you'd like in
+      the final dictionary
+
+    Returns
+    -------
+    dict
+      Dictionary of all processes and the respective files
+    """
+    retdic = { pandg : [] for pandg in procs_and_gens }
+    with open(txtfile) as f:
+        for line in f:
+            l = line.rstrip()
+            p_gen = proc_gen_from_file(l)
+            if p_gen in retdic:
+                retdic[p_gen].append(l)
+    return retdic
+
 _systematic_weights = [
-    [ "weightSyswLum_jvt_UP"                        , "weightSyswLum_jvt_DOWN"                         ] ,
-    [ "weightSyswLum_leptonSF_EL_SF_ID_UP"          , "weightSyswLum_leptonSF_EL_SF_ID_DOWN"           ] ,
-    [ "weightSyswLum_leptonSF_EL_SF_Isol_UP"        , "weightSyswLum_leptonSF_EL_SF_Isol_DOWN"         ] ,
-    [ "weightSyswLum_leptonSF_EL_SF_Reco_UP"        , "weightSyswLum_leptonSF_EL_SF_Reco_DOWN"         ] ,
-    [ "weightSyswLum_leptonSF_EL_SF_Trigger_UP"     , "weightSyswLum_leptonSF_EL_SF_Trigger_DOWN"      ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_ID_STAT_UP"     , "weightSyswLum_leptonSF_MU_SF_ID_STAT_DOWN"      ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_ID_SYST_UP"     , "weightSyswLum_leptonSF_MU_SF_ID_SYST_DOWN"      ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_Isol_STAT_UP"   , "weightSyswLum_leptonSF_MU_SF_Isol_STAT_DOWN"    ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_Isol_SYST_UP"   , "weightSyswLum_leptonSF_MU_SF_Isol_SYST_DOWN"    ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_Trigger_STAT_UP", "weightSyswLum_leptonSF_MU_SF_Trigger_STAT_DOWN" ] ,
-    [ "weightSyswLum_leptonSF_MU_SF_Trigger_SYST_UP", "weightSyswLum_leptonSF_MU_SF_Trigger_SYST_DOWN" ] ,
-    [ "weightSyswLum_pileup_UP"                     , "weightSyswLum_pileup_DOWN"                      ] ,
+    [ 'weightSyswLum_jvt_UP'                        , 'weightSyswLum_jvt_DOWN'                         ] ,
+    [ 'weightSyswLum_leptonSF_EL_SF_ID_UP'          , 'weightSyswLum_leptonSF_EL_SF_ID_DOWN'           ] ,
+    [ 'weightSyswLum_leptonSF_EL_SF_Isol_UP'        , 'weightSyswLum_leptonSF_EL_SF_Isol_DOWN'         ] ,
+    [ 'weightSyswLum_leptonSF_EL_SF_Reco_UP'        , 'weightSyswLum_leptonSF_EL_SF_Reco_DOWN'         ] ,
+    [ 'weightSyswLum_leptonSF_EL_SF_Trigger_UP'     , 'weightSyswLum_leptonSF_EL_SF_Trigger_DOWN'      ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_ID_STAT_UP'     , 'weightSyswLum_leptonSF_MU_SF_ID_STAT_DOWN'      ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_ID_SYST_UP'     , 'weightSyswLum_leptonSF_MU_SF_ID_SYST_DOWN'      ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_Isol_STAT_UP'   , 'weightSyswLum_leptonSF_MU_SF_Isol_STAT_DOWN'    ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_Isol_SYST_UP'   , 'weightSyswLum_leptonSF_MU_SF_Isol_SYST_DOWN'    ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_Trigger_STAT_UP', 'weightSyswLum_leptonSF_MU_SF_Trigger_STAT_DOWN' ] ,
+    [ 'weightSyswLum_leptonSF_MU_SF_Trigger_SYST_UP', 'weightSyswLum_leptonSF_MU_SF_Trigger_SYST_DOWN' ] ,
+    [ 'weightSyswLum_pileup_UP'                     , 'weightSyswLum_pileup_DOWN'                      ] ,
 ]
 
 _systematic_trees = [

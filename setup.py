@@ -12,6 +12,7 @@ setup(name='aidapy',
       ],
       packages=['aidapy',
                 'aidapy.hist',
-                'aidapy.meta'
+                'aidapy.meta',
+                'aidapy.plot'
       ]
 )
