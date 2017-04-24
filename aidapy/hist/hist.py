@@ -8,7 +8,6 @@ from __future__ import print_function
 import json
 import math
 from collections import namedtuple
-from copy import copy
 
 import logging
 from .. import configure_logging
@@ -140,7 +139,7 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     ROOT.TH1.SetDefaultSumw2()
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
     tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
-    hist = copy(ROOT.gDirectory.Get(hist_name))
+    hist = ROOT.gDirectory.Get(hist_name)
     if overflow:
         shift_overflow(hist)
     return hist
@@ -177,9 +176,6 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
         hists[hist['name']] = _histProps._make([hist['var'],hist['bins'],hist['cut']])
 
     sorted_files = sort_files_from_txt(topJson['files'],topJson['procs'])
-    for k, v in sorted_files.items():
-        for vv in v:
-            print(k,vv)
     chains = { k.split('_')[0] : ROOT.TChain('AIDA_'+tree_name) for k in sorted_files }
     chains['Fakes'] = ROOT.TChain('AIDAfk_'+tree_name)
     for k, v in sorted_files.items():
@@ -189,7 +185,6 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
             chains[k.split('_')[0]].Add(vv)
             if 'Data' not in k:
                 chains['Fakes'].Add(vv)
-                print('Fakes',vv)
 
     out = ROOT.TFile(outfilename,'UPDATE')
     if 'AIDA_'+tree_name in out.GetListOfKeys():
