@@ -166,6 +166,7 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
         return True
     topJson = json.load(open(jsonfile))
     lumi    = topJson['lumi']
+    logger.info('Scaling to '+str(lumi)+' /fb')
     hists   = {}
     for hist in topJson['histograms']:
         if tree_name == 'nominal':
@@ -208,7 +209,6 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
             if tree_name == 'nominal' and 'Data' not in name and do_weight_sys:
                 for systW in _systematic_weights:
                     for ud in systW:
-                        logger.info('Writing weight syst histogram: '+hname)
                         cut = str(lumi)+'*'+ud+'*'+props.cut
                         hname = name.split('_')[0]+'_'+histn+'_'+ud.split('wLum_')[-1]
                         h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)

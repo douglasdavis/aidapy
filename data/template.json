@@ -12,7 +12,7 @@
         {
             "name" : "met_0j",
             "var"  : "met",
-            "bins" : [20,0,200],
+            "bins" : [10,0,100],
             "cut"  : "(!SS&&elmu&&njets==0)"
         } ,
         {
