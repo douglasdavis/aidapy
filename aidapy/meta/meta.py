@@ -16,7 +16,9 @@ _dsid_table = {
     'Wjets_S22'        : [i for i in range(363436,363484)] + [i for i in range(363331,363354)] ,
     'Wjets_S221'       : [i for i in range(364156,364198)] ,
     'Diboson_PowPy8'   : [361601,361603,361607] , #[361610,361604]
-    'WW_PowPy8'        : [361600, 361606]
+    'WW_PowPy8'        : [361600, 361606] ,
+    "WW_dedicated"     : [361600, 361078] ,
+    "Diboson_dedicated": [361601, 361607, 361603, 361604, 361610]
 }
 
 def get_proc_gen(dsid):
