@@ -139,7 +139,7 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     ROOT.TH1.SetDefaultSumw2()
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
     tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
-    hist = ROOT.gDirectory.Get(hist_name)
+    hist = ROOT.gDirectory.Get(str(hist_name))
     if overflow:
         shift_overflow(hist)
     return hist
