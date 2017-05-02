@@ -62,6 +62,7 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
     elif isinstance(hist, ROOT.TH1D):
         dtype = 'f8'
     else:
+        print(hist,hist.GetName())
         raise TypeError('Must be ROOT.TH1F or ROOT.TH1D!')
     shape = (hist.GetNbinsX() +2,)
     array = np.ndarray(shape=shape, dtype=dtype, buffer=hist.GetArray())
@@ -138,6 +139,13 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
         raise TypeError('Must be ROOT TTree or TChain')
     ROOT.TH1.SetDefaultSumw2()
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
+
+    # if the tree/chain is empty, just make an empty histogram.
+    if tree.GetEntries() == 0:
+        print('making an empty',hist_name)
+        hist = ROOT.TH1F(hist_name,hist_name,binning[0],binning[1],binning[2])
+        return hist
+
     tree.Draw(var+'>>'+hist_name+bin_str, cut, 'goff')
     hist = ROOT.gDirectory.Get(str(hist_name))
     if overflow:
@@ -188,13 +196,11 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
                 chains['Fakes'].Add(vv)
 
     out = ROOT.TFile(outfilename,'UPDATE')
-    if 'AIDA_'+tree_name in out.GetListOfKeys():
-        logger.warning('AIDA_'+tree_name+' already in output file')
-        return False
+    lok = []
+    for o in out.GetListOfKeys():
+        lok.append(str(o.GetName()))
+    logger.info('Writing histograms using AIDA_'+tree_name)
 
-    outd = out.mkdir('AIDA_'+tree_name)
-    logger.info('Writing AIDA_'+tree_name)
-    outd.cd()
     do_weight_sys = True
     for name, chain in chains.items():
         if name == 'Data' and tree_name != 'nominal':
@@ -203,22 +209,25 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
             weight_name = 'nomWeightwLum'
             if 'Data' in name: cut = props.cut
             else: cut = str(lumi)+'*'+weight_name+'*'+props.cut
-            hname = name.split('_')[0]+'_'+histn
+            hname = tree_name+'_'+name.split('_')[0]+'_'+histn
+            if hname in lok:
+                logger.warning(hname+' Already in output file')
+                continue
             h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
             h.Write()
             if tree_name == 'nominal' and 'Data' not in name and do_weight_sys:
                 for systW in _systematic_weights:
                     for ud in systW:
                         cut = str(lumi)+'*'+ud+'*'+props.cut
-                        hname = name.split('_')[0]+'_'+histn+'_'+ud.split('wLum_')[-1]
+                        hname = tree_name+'_'+name.split('_')[0]+'_'+histn+'_'+ud.split('wLum_')[-1]
                         h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
                         h.Write()
-    outd.Write()
     out.Close()
     return True
 
 def total_systematic_histogram(root_file, hist_name=None,
-                               proc_names=['ttbar','Wt','WW','Zjets','Diboson','Fakes']):
+                               proc_names=['ttbar','Wt','WW','Ztautaujets','Diboson','Fakes'],
+                               return_stat_error=False):
     """
     A function to calculate and return a histogram with a total
     systematic error band in numpy format.
@@ -242,42 +251,60 @@ def total_systematic_histogram(root_file, hist_name=None,
     if hist_name is None:
         logger.error('Why no histogram name?')
         exit()
-    if 'AIDA_nominal' not in root_file.GetListOfKeys():
-        logger.error('Have to have the nominal histograms')
-        exit()
-    nominals   = { pname : root_file.Get('AIDA_nominal/'+pname+'_'+hist_name) for pname in proc_names }
-    nominals   = { pname : hist2array(h,return_edges=True) for pname, h in nominals.items() }
+    #if 'AIDA_nominal' not in root_file.GetListOfKeys():
+    #    logger.error('Have to have the nominal histograms')
+    #    exit()
+    nominals   = { pname : root_file.Get('nominal_'+pname+'_'+hist_name)
+                   for pname in proc_names }
+    nominals   = { pname : hist2array(h,return_edges=True, return_err=True)
+                   for pname, h in nominals.items() }
     edges      = nominals['ttbar'][1][0]
     nbins      = len(nominals['ttbar'][0])
     total_band = np.zeros(nbins,dtype=np.float32)
     nom_h      = np.zeros(nbins,dtype=np.float32)
+    nom_stater = np.zeros(nbins,dtype=np.float32)
     for pname, nom in nominals.items():
-        nom_h = nom_h + nom[0]
+        nom_h      = nom_h + nom[0]
+        if return_stat_error:
+            nom_stater = nom_stater + nom[2]*nom[2]
     for pname in proc_names:
         proc_nom = nominals[pname][0]
         # the two sided systematics in trees
         for ud in _systematic_ud_prefixes:
             if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
             else:                updown = ['__1up','__1down']
-            for ud2 in updown:
-                if 'AIDA_'+ud+ud2 not in root_file.GetListOfKeys():
-                    logger.warning('AIDA_'+ud+ud2+' systematic not available for process '+pname+'!')
-                    continue
-                arr = hist2array(root_file.Get('AIDA_'+ud+ud2+'/'+pname+'_'+hist_name))
-                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+            hname_up   = ud+updown[0]+'_'+pname+'_'+hist_name
+            hname_down = ud+updown[1]+'_'+pname+'_'+hist_name
+            if hname_up not in root_file.GetListOfKeys():
+                logger.warning(hname+' systematic not available for process '+pname+'!')
+                continue
+            if hname_down not in root_file.GetListOfKeys():
+                logger.warning(hname+' systematic not available for process '+pname+'!')
+                continue
+            arr_up     = hist2array(root_file.Get(hname_up))
+            arr_down   = hist2array(root_file.Get(hname_down))
+            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # the one sided systematics in trees, symmetrize it
         for osed in _systematic_singles:
-            if 'AIDA_'+osed not in root_file.GetListOfKeys():
-                logger.warning('AIDA_'+osed+' systematic not available!')
+            hname = osed+'_'+pname+'_'+hist_name
+            if hname not in root_file.GetListOfKeys():
+                logger.warning(hname+' systematic not available!')
                 continue
-            arr = hist2array(root_file.Get('AIDA_'+osed+'/'+pname+'_'+hist_name))
-            total_band = total_band + 2*(proc_nom-arr)*(proc_nom-arr)
+            arr        = hist2array(root_file.Get(hname))
+            total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
         # the hists from weights
         for wud in _systematic_weights:
             u_ws, d_ws = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
-            for ws in [u_ws,d_ws]:
-                arr = hist2array(root_file.Get('AIDA_nominal/'+pname+'_'+hist_name+'_'+ws))
-                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+            arr_up     = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+u_ws))
+            arr_down   = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+d_ws))
+            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+        # lumi uncertainty on fixed backgrounds
+        if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes' or pname == 'Wt':
+            total_band = total_band + (0.0374*proc_nom)*(0.0374*proc_nom)
     # root that summed quadrature.
     total_band = np.sqrt(total_band)
+
+    if return_stat_error:
+        nom_stater = np.sqrt(nom_stater)
+        return nom_h, total_band, edges, nom_stater
     return nom_h, total_band, edges

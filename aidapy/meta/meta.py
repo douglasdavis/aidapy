@@ -13,12 +13,15 @@ _dsid_table = {
     'Zjets_S21'        : [i for i in range(361372,361444)] ,
     'Zjets_S22'        : [i for i in range(363361,363411)] + [i for i in range(363102,363123)] ,
     'Zjets_S221'       : [i for i in range(364100,364142)] ,
+    'Ztautaujets_S221' : [i for i in range(364128,364142)] ,
+    'Zlljets_S221'     : [i for i in range(364100,364128)] ,
     'Wjets_S22'        : [i for i in range(363436,363484)] + [i for i in range(363331,363354)] ,
     'Wjets_S221'       : [i for i in range(364156,364198)] ,
     'Diboson_PowPy8'   : [361601,361603,361607] , #[361610,361604]
     'WW_PowPy8'        : [361600, 361606] ,
     "WW_dedicated"     : [361600, 361078] ,
-    "Diboson_dedicated": [361601, 361607, 361603, 361604, 361610]
+    "Diboson_dedicated": [361601, 361607, 361603, 361604, 361610] ,
+    "RareSM_MG5Py8"    : [410066, 410067, 410068, 410069, 410070, 410073, 410074, 410075]
 }
 
 def get_proc_gen(dsid):

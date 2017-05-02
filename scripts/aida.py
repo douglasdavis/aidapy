@@ -9,6 +9,8 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('-g','--generate-histograms',action='store_true',dest='gen_hists',default=False,
                     help='Flag to generate histograms and store in file')
+parser.add_argument('-p','--generate-plots',dest='gen_plots',nargs='+',type=str,
+                    help='Make plots (HARD CODED UNDER CONSTRUCTION')
 parser.add_argument('-j','--json',type=str,dest='json_file',default=AIDAPYDIR+'/data/dukeatl.json',
                     help='JSON configuration file for histogram generation')
 parser.add_argument('-n','--tree-name',type=str,dest='tree_name',default='ALL',
@@ -24,10 +26,15 @@ if len(sys.argv) < 2:
     exit(0)
 
 import aidapy.hist as aph
+import aidapy.plot as app
 import ROOT
 
 if args.gen_hists:
     aph.json2hists(args.json_file,outfilename=args.out_file,tree_name=args.tree_name)
 
 if args.tests:
-    print aph.total_systematic_histogram(ROOT.TFile('aida_histograms.root','READ'),'met_0j')
+    print('Doesn\'t do anything')
+
+if args.gen_plots:
+    for p in args.gen_plots:
+        app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)

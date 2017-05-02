@@ -42,5 +42,8 @@ docs/_build/*
 cover/*
 MANIFEST
 
-# ROOT
+# ROOT and plots
 *.root
+*.pdf
+
+run/*
