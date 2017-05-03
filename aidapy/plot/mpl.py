@@ -95,7 +95,7 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     else:
         xsuf = ''
     xtitle = xpref+' '+xsuf
-    if 'pT' in hist_name:
+    if 'pT' in hist_name or '_2bins' in hist_name:
         logy = True
     axerr.set_xlabel(xtitle)
     ax.set_ylabel(ytitle)

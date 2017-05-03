@@ -212,22 +212,38 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
             hname = tree_name+'_'+name.split('_')[0]+'_'+histn
             if hname in lok:
                 logger.warning(hname+' Already in output file')
-                continue
-            h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
-            h.Write()
+                pass
+            else:
+                h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
+                h.Write()
             if tree_name == 'nominal' and 'Data' not in name and do_weight_sys:
                 for systW in _systematic_weights:
                     for ud in systW:
                         cut = str(lumi)+'*'+ud+'*'+props.cut
                         hname = tree_name+'_'+name.split('_')[0]+'_'+histn+'_'+ud.split('wLum_')[-1]
+                        if hname in lok:
+                            logger.warning(hname+' Already in output file')
+                            pass
+                        else:
+                            h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
+                            h.Write()
+            if tree_name == 'nominal' and 'Ztautau' in name and do_weight_sys:
+                for i in range(1,115):
+                    cut = str(lumi)+'*weightSyswLum_genWeight'+str(i)+'*'+props.cut
+                    hname = tree_name+'_'+name.split('_')[0]+'_'+histn+'_genWeight'+str(i)
+                    if hname in lok:
+                        logger.warning(hname+' Already in output file')
+                        pass
+                    else:
                         h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
                         h.Write()
+
     out.Close()
     return True
 
 def total_systematic_histogram(root_file, hist_name=None,
                                proc_names=['ttbar','Wt','WW','Ztautaujets','Diboson','Fakes'],
-                               return_stat_error=False):
+                               return_stat_error=False, do_gen_weights=False):
     """
     A function to calculate and return a histogram with a total
     systematic error band in numpy format.
@@ -298,8 +314,17 @@ def total_systematic_histogram(root_file, hist_name=None,
             arr_up     = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+u_ws))
             arr_down   = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+d_ws))
             total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+        # Ztautau generator weights
+        if 'Ztautau' in pname and do_gen_weights:
+            for i in range(1,115): ## all 115 explode the sys band. need to look into this
+                hname = 'nominal_'+pname+'_'+hist_name+'_genWeight'+str(i)
+                if hname not in root_file.GetListOfKeys():
+                    logger.warning(hname+' systematic not available for process '+pname+'!')
+                    continue
+                arr        = hist2array(root_file.Get(hname))
+                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
         # lumi uncertainty on fixed backgrounds
-        if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes' or pname == 'Wt':
+        if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes':
             total_band = total_band + (0.0374*proc_nom)*(0.0374*proc_nom)
     # root that summed quadrature.
     total_band = np.sqrt(total_band)
