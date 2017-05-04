@@ -1,0 +1,4 @@
+mc_config:   '/Users/ddavis/Software/aidapy/data/files.yaml'
+mc_prefix:   '/Users/ddavis/Software/LocalData/osofonly/mc'
+hist_config: '/Users/ddavis/Software/aidapy/data/hists.yaml'
+data_file:   '/Users/ddavis/Software/LocalData/osofonly/data/all.root'

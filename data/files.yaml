@@ -1,0 +1,56 @@
+ttbar:
+  FULL:
+    main:
+      DSIDs:
+        - 410501
+  FAST:
+    main:
+      DSIDs:
+        - 410501
+    HS:
+      DSIDs:
+        - 410225
+    FH:
+      DSIDs:
+        - 410525
+    ARU:
+      DSIDs:
+        - 410511
+    ARD:
+      DSIDs:
+        - 410512
+Wt:
+  FULL:
+    main:
+      DSIDs:
+        - 410015
+        - 410016
+Ztautau:
+  FULL:
+    main:
+      DSIDs:
+        - [364128, 364141]
+WW:
+  FULL:
+    main:
+      DSIDs:
+        - 361600
+        - 361606
+Zll:
+  FULL:
+    main:
+      DSIDs:
+        - [364100, 364113] # Zee
+        - [364114, 364127] # Zmumu
+Diboson:
+  FULL:
+    main:
+      DSIDs:
+        - 361601
+        - 361603
+        - 361607
+Wjets:
+  FULL:
+    main:
+      DSIDs:
+        - [364156, 364197]

@@ -10,9 +10,12 @@ Histogramming module (aidapy.hist)
 
 .. autofunction:: hist2array
 .. autofunction:: tree2hist
-.. autofunction:: json2hists
 .. autofunction:: shift_overflow
-.. autofunction:: total_systematic_histogram
+.. autofunction:: generate_mc_hists
+.. autofunction:: generate_data_hists
+.. autofunction:: generate_hists
+.. autofunction:: json2hists
+.. autofunction:: json_total_systematic_histogram
 
 Metadata access module (aidapy.meta)
 ------------------------------------

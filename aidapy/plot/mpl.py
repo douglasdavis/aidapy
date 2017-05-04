@@ -1,4 +1,4 @@
-from aidapy.hist import total_systematic_histogram
+from aidapy.hist import json_total_systematic_histogram
 from aidapy.hist import hist2array
 
 import numpy as np
@@ -40,8 +40,8 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     nominals = { pname : hist2array(h,return_edges=True) for pname, h in nominals.iteritems() }
     data     = root_file.Get('nominal_Data_'+hist_name)
     data     = hist2array(data)
-    nom_h, total_band, edges, staterr = total_systematic_histogram(root_file,hist_name,proc_names,
-                                                                   return_stat_error=True)
+    nom_h, total_band, edges, staterr = json_total_systematic_histogram(root_file,hist_name,proc_names,
+                                                                        return_stat_error=True)
     centers  = np.delete(edges,[0])-(np.ediff1d(edges)/2.0)
     to_stack = [nominals[name][0] for name in ['RareSM','Diboson','Fakes','WW','Wt','Ztautaujets','ttbar']]
     cols     = ['brown','black','gray','green','blue','orange','white']

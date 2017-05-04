@@ -8,6 +8,7 @@ from __future__ import print_function
 import json
 import math
 from collections import namedtuple
+import yaml
 
 import logging
 from .. import configure_logging
@@ -62,7 +63,6 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
     elif isinstance(hist, ROOT.TH1D):
         dtype = 'f8'
     else:
-        print(hist,hist.GetName())
         raise TypeError('Must be ROOT.TH1F or ROOT.TH1D!')
     shape = (hist.GetNbinsX() +2,)
     array = np.ndarray(shape=shape, dtype=dtype, buffer=hist.GetArray())
@@ -142,7 +142,6 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
 
     # if the tree/chain is empty, just make an empty histogram.
     if tree.GetEntries() == 0:
-        print('making an empty',hist_name)
         hist = ROOT.TH1F(hist_name,hist_name,binning[0],binning[1],binning[2])
         return hist
 
@@ -152,6 +151,199 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
         shift_overflow(hist)
     return hist
 
+
+def _root_file_dict(yaml_file):
+    """
+    Build a dictionary of ROOT files using a YAML config.
+    The Fakes_FULL_main entry will be filled with the
+    contents of all other FULL_main entries
+    """
+    with open(yaml_file) as f:
+        files_from_yaml = yaml.load(f)
+
+    file_dict = {}
+    file_dict['Fakes_FULL_main'] = []
+    for process, vals1 in files_from_yaml.items():
+        for simtype, vals2 in vals1.items():
+            for samptype, vals3 in vals2.items():
+                procsimsamp = '_'.join([process,simtype,samptype])
+                file_dict[procsimsamp] = []
+                for dsid, vals4 in vals3.items():
+                    for entry in vals4:
+                        if isinstance(entry,list):
+                            for d in range(entry[0],entry[1]+1):
+                                file_dict[procsimsamp].append(str(d)+'_'+simtype+'.root')
+                                if 'FULL_main' in procsimsamp:
+                                    file_dict['Fakes_FULL_main'].append(str(d)+'_'+simtype+'.root')
+                        else:
+                            file_dict[procsimsamp].append(str(entry)+'_'+simtype+'.root')
+                            if 'FULL_main' in procsimsamp:
+                                file_dict['Fakes_FULL_main'].append(str(entry)+'_'+simtype+'.root')
+    return file_dict
+
+def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal', lumi=36.1,
+                      ignore=['Zll_FULL_main','Wjets_FULL_main'], output='out.root', Z_genWeights=False,
+                      provide_file_dict=None):
+    """
+    Create MC histograms from two YAML config files.
+
+    Parameters
+    ----------
+    mc_yaml_file: A YAML files which organizes MC files
+    hist_yaml:    A YAML file which defines the desired histograms
+    mc_prefix:    The path to where MC files exist
+    aida_tree:    Which AIDA tree to use to build the histograms
+    lumi:         What luminosity to scale to
+    ignore:       Different process prefixes (defined in the MC YAML file) to ignore
+    output:       Name of output ROOT file
+    Z_genWeights: Build histograms using the generator weights available in Ztautau
+    """
+
+    # provide file dict to not rebuild if it exists somewhere.
+    if provide_file_dict is not None:
+        file_dict = provide_file_dict
+    else:
+        file_dict = _root_file_dict(mc_yaml_file)
+
+    chains = { fd : ROOT.TChain('AIDA_'+aida_tree) for fd in file_dict if fd != 'Fakes_FULL_main' }
+    # fakes have their own tree name.
+    chains['Fakes_FULL_main'] = ROOT.TChain('AIDAfk_'+aida_tree)
+    for ig in ignore:
+        if ig in chains:
+            del chains[ig]
+    if aida_tree != 'nominal':
+        dels = [c for c in chains if 'FAST' in c]
+        for d in dels:
+            del chains[d]
+    for c in chains:
+        for f in file_dict[c]:
+            chains[c].Add(mc_prefix+'/'+f)
+
+    with open(hist_yaml) as hf:
+        hist_dict = yaml.load(hf)
+
+    output_file = ROOT.TFile(output,'UPDATE')
+    rootkeys    = [str(o.GetName()) for o in output_file.GetListOfKeys()]
+    for pname, chain in chains.items():
+        for hist_name, hist_props in hist_dict.items():
+            hname  = pname+'_'+aida_tree+'_'+hist_name
+            if hname in rootkeys:
+                logger.warning(hname+' already in file')
+            else:
+                cut = str(lumi)+'*nomWeightwLum*('+hist_props['cut']+')'
+                h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                logger.info(h)
+                h.Write()
+            if aida_tree == 'nominal' and 'FAST' not in pname:
+                for systW in _systematic_weights:
+                    for ud in systW:
+                        hname = pname+'_'+aida_tree+'_'+hist_name+'_'+ud
+                        if hname in rootkeys:
+                            logger.warning(hname+' already in file')
+                        else:
+                            cut = str(lumi)+'*'+ud+'*('+hist_props['cut']+')'
+                            h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                            logger.info(h)
+                            h.Write()
+            if aida_tree == 'nominal' and 'Ztautau' in pname and Z_genWeights:
+                for i in range(1,115):
+                    hname = pname+'_'+aida_tree+'_'+hist_name+'_genWeight'+str(i)
+                    if hname in rootkeys:
+                        logger.warning(hname+' already in file')
+                    else:
+                        cut = str(lumi)+'*weightSyswLum_genWeight'+str(i)+'*('+hist_props['cut']+')'
+                        h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                        logger.info(h)
+                        h.Write()
+
+    output_file.Close()
+
+def generate_data_hists(data_root_file, hist_yaml, output='out.root'):
+    """
+    Using the histogram YAML config and a single ROOT file containing
+    an AIDA ntuple of data, build histograms.
+
+    Parameters
+    ----------
+    data_root_file: ROOT file containing AIDA ntuple
+    hist_yaml:    A YAML file which defines the desired histograms
+    output:       Name of output ROOT file
+    """
+    chain = ROOT.TChain('AIDA_nominal')
+    chain.Add(data_root_file)
+    output_file = ROOT.TFile(output,'UPDATE')
+    rootkeys = [str(o.GetName()) for o in output_file.GetListOfKeys()]
+    with open(hist_yaml) as hf:
+        hist_dict = yaml.load(hf)
+    for hist_name, hist_props in hist_dict.items():
+        hname = 'Data_'+hist_name
+        if hname in rootkeys:
+            logger.warning(hname+' already in file')
+        else:
+            cut = '1.0*('+hist_props['cut']+')'
+            h   = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+            logger.info(h)
+            h.Write()
+
+    output_file.Close()
+
+
+def generate_hists(yaml_config, output='out.root', systematics='ALL'):
+    """
+    Generate histograms based on a single YAML file.
+    This is essentially a wrapper around the functions
+    - generate_data_hists
+    - generate_mc_hists
+    steered by the config file
+
+    Parameters
+    ----------
+    yaml_config: Path to the YAML config file
+    output:      Name of output ROOT file
+    systematics: Which systematic trees to process. If not 'ALL', provide a list
+    """
+    with open(yaml_config) as f:
+        config = yaml.load(f)
+
+    provided = _root_file_dict(config['mc_config'])
+    generate_mc_hists(config['mc_config'],config['hist_config'],
+                      mc_prefix=config['mc_prefix'], output=output,
+                      provide_file_dict=provided)
+
+    if systematics == 'ALL':
+        for tn in _systematic_trees:
+            generate_mc_hists(config['mc_config'],config['hist_config'], aida_tree=tn,
+                              mc_prefix=config['mc_prefix'], output=output,
+                              provide_file_dict=provided)
+    else:
+        if not isinstance(systematics,list):
+            raise TypeError('systematics parameter should be a list!')
+        for tn in systematics:
+            generate_mc_hists(config['mc_config'],config['hist_config'], aida_tree=tn,
+                              mc_prefix=config['mc_prefix'], output=output,
+                              provide_file_dict=provided)
+
+    generate_data_hists(config['data_file'], config['hist_config'],
+                        output=output)
+
+
+
+
+
+
+
+
+
+
+
+#####################################################
+#####################################################
+#####################################################
+## OLD JSON BASED STUFF BAILING ON THIS IN THE FUTURE    
+#####################################################
+#####################################################
+#####################################################
+#####################################################
 def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'):
 
     """
@@ -241,9 +433,9 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     out.Close()
     return True
 
-def total_systematic_histogram(root_file, hist_name=None,
-                               proc_names=['ttbar','Wt','WW','Ztautaujets','Diboson','Fakes'],
-                               return_stat_error=False, do_gen_weights=False):
+def json_total_systematic_histogram(root_file, hist_name=None,
+                                    proc_names=['ttbar','Wt','WW','Ztautaujets','Diboson','Fakes'],
+                                    return_stat_error=False, do_gen_weights=False):
     """
     A function to calculate and return a histogram with a total
     systematic error band in numpy format.
