@@ -197,8 +197,8 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     ignore:       Different process prefixes (defined in the MC YAML file) to ignore
     output:       Name of output ROOT file
     Z_genWeights: Build histograms using the generator weights available in Ztautau
-    """
 
+    """
     # provide file dict to not rebuild if it exists somewhere.
     if provide_file_dict is not None:
         file_dict = provide_file_dict
@@ -266,8 +266,9 @@ def generate_data_hists(data_root_file, hist_yaml, output='out.root'):
     Parameters
     ----------
     data_root_file: ROOT file containing AIDA ntuple
-    hist_yaml:    A YAML file which defines the desired histograms
-    output:       Name of output ROOT file
+    hist_yaml:      A YAML file which defines the desired histograms
+    output:         Name of output ROOT file
+
     """
     chain = ROOT.TChain('AIDA_nominal')
     chain.Add(data_root_file)
@@ -327,10 +328,123 @@ def generate_hists(yaml_config, output='out.root', systematics='ALL'):
                         output=output)
 
 
+def total_systematic_histogram(root_file, hist_name=None,
+                               proc_names=['ttbar','Wt','WW','Ztautau','Diboson','Fakes'],
+                               return_stat_error=False, do_gen_weights=False):
+    """
+    A function to calculate and return a histogram with a total
+    systematic error band in numpy format.
 
+    Parameters
+    ----------
+    root_file : the ROOT file with the histograms
+    hist_name : the name of the histogram to generate the band for (must exist in ROOT file!)
+    proc_names : the names of the processes contributing to the band (must exist in ROOT file!)
 
+    Returns
+    -------
+    numpy.ndarray
+       the nominal bin heights
+    numpy.ndarray
+       the systematic error in each bin
+    numpy.ndarray
+       the edges of the histogram bins
 
+    """
+    if hist_name is None:
+        logger.error('Why no histogram name?')
+        exit()
+    listofkeys = root_file.GetListOfKeys()
+    nominals   = { pname : root_file.Get(pname+'_FULL_main_nominal_'+hist_name)
+                   for pname in proc_names }
+    nominals   = { pname : hist2array(h,return_edges=True, return_err=True)
+                   for pname, h in nominals.items() }
+    edges      = nominals['ttbar'][1][0]
+    nbins      = len(nominals['ttbar'][0])
+    total_band = np.zeros(nbins,dtype=np.float32)
+    nom_h      = np.zeros(nbins,dtype=np.float32)
+    nom_stater = np.zeros(nbins,dtype=np.float32)
+    for pname, nom in nominals.items():
+        nom_h      = nom_h + nom[0]
+        if return_stat_error:
+            nom_stater = nom_stater + nom[2]*nom[2]
+    for pname in proc_names:
+        proc_nom = nominals[pname][0]
+        # the two sided systematics in trees
+        for ud in _systematic_ud_prefixes:
+            if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
+            else:                updown = ['__1up','__1down']
+            hname_up   = pname+'_FULL_main_'+ud+updown[0]+'_'+hist_name
+            hname_down = pname+'_FULL_main_'+ud+updown[1]+'_'+hist_name
+            if hname_up not in listofkeys:
+                logger.warning(hname_up+' systematic not available for process '+pname+'!')
+                continue
+            if hname_down not in listofkeys:
+                logger.warning(hname_down+' systematic not available for process '+pname+'!')
+                continue
+            arr_up     = hist2array(root_file.Get(hname_up))
+            arr_down   = hist2array(root_file.Get(hname_down))
+            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+        # the one sided systematics in trees, symmetrize it
+        for osed in _systematic_singles:
+            hname = pname+'_FULL_main_'+osed+'_'+hist_name
+            if hname not in listofkeys:
+                logger.warning(hname+' systematic not available!')
+                continue
+            arr        = hist2array(root_file.Get(hname))
+            total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+        # the hists from weights
+        for wud in _systematic_weights:
+            u_ws, d_ws = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
+            arr_up     = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
+            arr_down   = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
+            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+        # Ztautau generator weights
+        if 'Ztautau' in pname and do_gen_weights:
+            for i in range(1,115): ## all 115 explode the sys band. need to look into this
+                hname = pname+'_FULL_main_'+hist_name+'_genWeight'+str(i)
+                if hname not in listofkeys:
+                    logger.warning(hname+' systematic not available for process '+pname+'!')
+                    continue
+                arr        = hist2array(root_file.Get(hname))
+                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+        # lumi uncertainty on fixed backgrounds
+        if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes':
+            total_band = total_band + (0.0374*proc_nom)*(0.0374*proc_nom)
+        # ttbar modeling uncertainties
+        if pname == 'ttbar' and ('ttbar_FAST_main_nominal_'+hist_name) in listofkeys:
+            fast_nom = hist2array(root_file.Get('ttbar_FAST_main_nominal_'+hist_name))
+            if ('ttbar_FAST_ARU_nominal_'+hist_name) in listofkeys \
+               and('ttbar_FAST_ARD_nominal_'+hist_name) in listofkeys:
+                ARU         = hist2array(root_file.Get('ttbar_FAST_ARU_nominal_'+hist_name))
+                ARD         = hist2array(root_file.Get('ttbar_FAST_ARD_nominal_'+hist_name))
+                full_ARU    = ARU/fast_nom*proc_nom
+                full_ARD    = ARD/fast_nom*proc_nom
+                total_band += np.power(0.5*(full_ARU-full_ARD),2)
+            else:
+                logger.warning('ttbar additional radiation histograms not present')
+            if ('ttbar_FAST_FH_nominal_'+hist_name) in listofkeys:
+                FH          = hist2array(root_file.Get('ttbar_FAST_FH_nominal_'+hist_name))
+                full_FH     = FH/fast_nom*proc_nom
+                total_band += np.power(proc_nom-full_FH,2)
+            else:
+                logger.warning('ttbar hadronization histograms not present')
+            if ('ttbar_FAST_HS_nominal_'+hist_name) in listofkeys:
+                HS          = hist2array(root_file.Get('ttbar_FAST_HS_nominal_'+hist_name))
+                full_HS     = HS/fast_nom*proc_nom
+                total_band += np.power(proc_nom-full_HS,2)
+        elif pname == 'ttbar':
+            logger.warning('Cannot add ttbar modeling systematics to band')
+        else:
+            pass
 
+    # root that summed quadrature.
+    total_band = np.sqrt(total_band)
+
+    if return_stat_error:
+        nom_stater = np.sqrt(nom_stater)
+        return nom_h, total_band, edges, nom_stater
+    return nom_h, total_band, edges
 
 
 
@@ -433,95 +547,3 @@ def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'
     out.Close()
     return True
 
-def json_total_systematic_histogram(root_file, hist_name=None,
-                                    proc_names=['ttbar','Wt','WW','Ztautaujets','Diboson','Fakes'],
-                                    return_stat_error=False, do_gen_weights=False):
-    """
-    A function to calculate and return a histogram with a total
-    systematic error band in numpy format.
-
-    Parameters
-    ----------
-    root_file : the ROOT file with the histograms
-    hist_name : the name of the histogram to generate the band for (must exist in ROOT file!)
-    proc_names : the names of the processes contributing to the band (must exist in ROOT file!)
-
-    Returns
-    -------
-    numpy.ndarray
-       the nominal bin heights
-    numpy.ndarray
-       the systematic error in each bin
-    numpy.ndarray
-       the edges of the histogram bins
-
-    """
-    if hist_name is None:
-        logger.error('Why no histogram name?')
-        exit()
-    #if 'AIDA_nominal' not in root_file.GetListOfKeys():
-    #    logger.error('Have to have the nominal histograms')
-    #    exit()
-    nominals   = { pname : root_file.Get('nominal_'+pname+'_'+hist_name)
-                   for pname in proc_names }
-    nominals   = { pname : hist2array(h,return_edges=True, return_err=True)
-                   for pname, h in nominals.items() }
-    edges      = nominals['ttbar'][1][0]
-    nbins      = len(nominals['ttbar'][0])
-    total_band = np.zeros(nbins,dtype=np.float32)
-    nom_h      = np.zeros(nbins,dtype=np.float32)
-    nom_stater = np.zeros(nbins,dtype=np.float32)
-    for pname, nom in nominals.items():
-        nom_h      = nom_h + nom[0]
-        if return_stat_error:
-            nom_stater = nom_stater + nom[2]*nom[2]
-    for pname in proc_names:
-        proc_nom = nominals[pname][0]
-        # the two sided systematics in trees
-        for ud in _systematic_ud_prefixes:
-            if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
-            else:                updown = ['__1up','__1down']
-            hname_up   = ud+updown[0]+'_'+pname+'_'+hist_name
-            hname_down = ud+updown[1]+'_'+pname+'_'+hist_name
-            if hname_up not in root_file.GetListOfKeys():
-                logger.warning(hname+' systematic not available for process '+pname+'!')
-                continue
-            if hname_down not in root_file.GetListOfKeys():
-                logger.warning(hname+' systematic not available for process '+pname+'!')
-                continue
-            arr_up     = hist2array(root_file.Get(hname_up))
-            arr_down   = hist2array(root_file.Get(hname_down))
-            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
-        # the one sided systematics in trees, symmetrize it
-        for osed in _systematic_singles:
-            hname = osed+'_'+pname+'_'+hist_name
-            if hname not in root_file.GetListOfKeys():
-                logger.warning(hname+' systematic not available!')
-                continue
-            arr        = hist2array(root_file.Get(hname))
-            total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
-        # the hists from weights
-        for wud in _systematic_weights:
-            u_ws, d_ws = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
-            arr_up     = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+u_ws))
-            arr_down   = hist2array(root_file.Get('nominal_'+pname+'_'+hist_name+'_'+d_ws))
-            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
-        # Ztautau generator weights
-        if 'Ztautau' in pname and do_gen_weights:
-            for i in range(1,115): ## all 115 explode the sys band. need to look into this
-                hname = 'nominal_'+pname+'_'+hist_name+'_genWeight'+str(i)
-                if hname not in root_file.GetListOfKeys():
-                    logger.warning(hname+' systematic not available for process '+pname+'!')
-                    continue
-                arr        = hist2array(root_file.Get(hname))
-                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
-        # lumi uncertainty on fixed backgrounds
-        if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes':
-            total_band = total_band + (0.0374*proc_nom)*(0.0374*proc_nom)
-    # root that summed quadrature.
-    total_band = np.sqrt(total_band)
-
-    if return_stat_error:
-        nom_stater = np.sqrt(nom_stater)
-        return nom_h, total_band, edges, nom_stater
-    return nom_h, total_band, edges

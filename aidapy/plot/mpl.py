@@ -1,4 +1,4 @@
-from aidapy.hist import json_total_systematic_histogram
+from aidapy.hist import total_systematic_histogram
 from aidapy.hist import hist2array
 
 import numpy as np
@@ -11,7 +11,7 @@ import matplotlib as mpl
 import matplotlib.gridspec as gsc
 plt.style.use('classic')
 from pylab import setp
-for key, val in style_mpl().iteritems():
+for key, val in style_mpl().items():
     mpl.rcParams[key] = val
 from matplotlib.font_manager import FontProperties
 fontBase  = FontProperties()
@@ -35,21 +35,21 @@ def canvas_with_ratio(figsize=(8,7),height_ratios=[3.65,1],
     return fig, ax0, ax1
 
 def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
-              proc_names=['Wt','ttbar','Fakes','WW','Diboson','Ztautaujets','RareSM']):
-    nominals = { pname : root_file.Get('nominal_'+pname+'_'+hist_name) for pname in proc_names }
-    nominals = { pname : hist2array(h,return_edges=True) for pname, h in nominals.iteritems() }
-    data     = root_file.Get('nominal_Data_'+hist_name)
+              proc_names=['Wt','ttbar','Fakes','WW','Diboson','Ztautau']):#,'RareSM']):
+    nominals = { pname : root_file.Get(pname+'_FULL_main_nominal_'+hist_name) for pname in proc_names }
+    nominals = { pname : hist2array(h,return_edges=True) for pname, h in nominals.items() }
+    data     = root_file.Get('Data_'+hist_name)
     data     = hist2array(data)
-    nom_h, total_band, edges, staterr = json_total_systematic_histogram(root_file,hist_name,proc_names,
-                                                                        return_stat_error=True)
+    nom_h, total_band, edges, staterr = total_systematic_histogram(root_file,hist_name,proc_names,
+                                                                   return_stat_error=True)
     centers  = np.delete(edges,[0])-(np.ediff1d(edges)/2.0)
-    to_stack = [nominals[name][0] for name in ['RareSM','Diboson','Fakes','WW','Wt','Ztautaujets','ttbar']]
-    cols     = ['brown','black','gray','green','blue','orange','white']
+    to_stack = [nominals[name][0] for name in ['Diboson','Fakes','WW','Wt','Ztautau','ttbar']]
+    cols     = ['black','gray','green','blue','orange','white']
     fig,ax,axerr = canvas_with_ratio()
     ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko',label=r'$\mathrm{Data}$')
     ax.hist([centers for _ in to_stack],weights=to_stack,bins=edges,stacked=True,
             color=cols,histtype='stepfilled',
-            label=[r'Rare SM',r'Diboson',r'Fake/NP (MC)',
+            label=[r'Diboson',r'Fake/NP (MC)',
                    r'WW',r'Wt',r'$Z\rightarrow\tau\tau$',r'$t\bar{t}$'])
     #ax.errorbar(centers,nom_h,yerr=total_band,fmt='ro')
     syspatches = []

@@ -4,8 +4,8 @@ from .hist import tree2hist
 from .hist import generate_mc_hists
 from .hist import generate_data_hists
 from .hist import generate_hists
+from .hist import total_systematic_histogram
 from .hist import json2hists
-from .hist import json_total_systematic_histogram
 
 __ALL__ = [
     'hist2array',
@@ -14,6 +14,6 @@ __ALL__ = [
     'generate_mc_hists',
     'generate_data_hists',
     'generate_hists',
+    'total_systematic_histogram',
     'json2hists',
-    'json_total_systematic_histogram'
 ]
