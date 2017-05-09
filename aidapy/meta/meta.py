@@ -13,8 +13,8 @@ _dsid_table = {
     'Zjets_S21'        : [i for i in range(361372,361444)] ,
     'Zjets_S22'        : [i for i in range(363361,363411)] + [i for i in range(363102,363123)] ,
     'Zjets_S221'       : [i for i in range(364100,364142)] ,
-    'Ztautaujets_S221' : [i for i in range(364128,364142)] ,
-    'Zlljets_S221'     : [i for i in range(364100,364128)] ,
+    'Ztautau_S221'     : [i for i in range(364128,364142)] ,
+    'Zll_S221'         : [i for i in range(364100,364128)] ,
     'Wjets_S22'        : [i for i in range(363436,363484)] + [i for i in range(363331,363354)] ,
     'Wjets_S221'       : [i for i in range(364156,364198)] ,
     'Diboson_PowPy8'   : [361601,361603,361607] , #[361610,361604]
