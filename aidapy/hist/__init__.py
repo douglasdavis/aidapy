@@ -6,7 +6,6 @@ from .hist import generate_mc_hists
 from .hist import generate_data_hists
 from .hist import generate_hists
 from .hist import total_systematic_histogram
-from .hist import json2hists
 
 __ALL__ = [
     'hist2array',
@@ -17,5 +16,4 @@ __ALL__ = [
     'generate_data_hists',
     'generate_hists',
     'total_systematic_histogram',
-    'json2hists',
 ]

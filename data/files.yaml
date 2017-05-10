@@ -7,16 +7,16 @@ ttbar:
     main:
       DSIDs:
         - 410501
-    HS:
+    sysHS:
       DSIDs:
         - 410225
-    FH:
+    sysFH:
       DSIDs:
         - 410525
-    ARU:
+    sysARup:
       DSIDs:
         - 410511
-    ARD:
+    sysARdown:
       DSIDs:
         - 410512
 Wt:

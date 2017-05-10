@@ -217,7 +217,7 @@ def _root_file_dict(yaml_file):
 
 def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal', lumi=36.1,
                       ignore=['Zll_FULL_main','Wjets_FULL_main'], output='out.root', Z_genWeights=False,
-                      provide_file_dict=None):
+                      provide_file_dict=None, do_F2F=True):
     """
     Create MC histograms from two YAML config files.
 
@@ -231,6 +231,7 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     ignore:       Different process prefixes (defined in the MC YAML file) to ignore
     output:       Name of output ROOT file
     Z_genWeights: Build histograms using the generator weights available in Ztautau
+    do_F2F:       Do Fast to Full histograms (scale fast sim hists to appropriate "full" hists)
 
     """
     # provide file dict to not rebuild if it exists somewhere.
@@ -291,6 +292,66 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                         h.Write()
 
     output_file.Close()
+
+    ## Reopen the output file and lets try to make some systematic
+    ## histograms from the fastsim samples.  This is hard coded naming
+    ## based on YAML naming defined in the template.
+    if aida_tree == 'nominal' and do_F2F:
+        hn = hist_name
+        output_file = ROOT.TFile(output,'UPDATE')
+        listofkeys  = [str(o.GetName()) for o in output_file.GetListOfKeys()]
+
+        def f2f(faststr, fullstr, fast_nom, pnom, fast_nom_e, pnom_err, bins):
+            """
+            This function does the fast to full histogram scaling.  Error is
+            assigned using standard error propagation.. since the error is
+            just statistical. The new "FULL" histogram is written to the tree.
+            """
+            fast_a, err  = hist2array(output_file.Get(faststr), return_err=True)
+            full_a       = (pnom/fast_nom)*fast_a
+            full_e_term  = np.power(fast_a/fast_nom*pnom_err,2)
+            full_e_term += np.power(pnom/fast_nom*err,2)
+            full_e_term += np.power(pnom*fast_a/(fast_nom*fast_nom)*fast_nom_e,2)
+            full_h       = array2hist(full_a, fullstr, bins, errors=np.sqrt(full_e_term))
+            if str(full_h.GetName()) in listofkeys:
+                logger.warning(str(full_h.GetName()+' already in file'))
+            else:
+                logger.info(full_h)
+                full_h.Write()
+
+        for hist_name in hist_dict:
+            pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hist_name),
+                                           return_edges=True, return_err=True)
+            edges = edges[0]
+            bins = (pnom.size,edges[0],edges[-1])
+            fast_nom, fast_nom_e = hist2array(output_file.Get('ttbar_FAST_main_nominal_'+hist_name),
+                                              return_err=True)
+
+            ## additonal radiation
+            if 'ttbar_FAST_sysARup_nominal_'+hist_name in listofkeys \
+               and 'ttbar_FAST_sysARdown_nominal_'+hist_name in listofkeys:
+                f2f('ttbar_FAST_sysARup_nominal_'+hn, 'ttbar_FULL_sysARup_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+                f2f('ttbar_FAST_sysARdown_nominal_'+hn,'ttbar_FULL_sysARdown_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find ttbar additional radiation FAST hists')
+
+            ## factorization/hadronization
+            if 'ttbar_FAST_sysFH_nominal_'+hist_name in listofkeys:
+                f2f('ttbar_FAST_sysFH_nominal_'+hn, 'ttbar_FULL_sysFH_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find ttbar factorization/hadronization FAST hists')
+
+            ## hard scattering
+            if 'ttbar_FAST_sysHS_nominal_'+hist_name in listofkeys:
+                f2f('ttbar_FAST_sysHS_nominal_'+hn, 'ttbar_FULL_sysHS_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find ttbar hard scattering FAST hists')
+
+        output_file.Close()
 
 def generate_data_hists(data_root_file, hist_yaml, output='out.root'):
     """
@@ -403,7 +464,7 @@ def total_systematic_histogram(root_file, hist_name=None,
         if return_stat_error:
             nom_stater = nom_stater + nom[2]*nom[2]
     for pname in proc_names:
-        proc_nom = nominals[pname][0]
+        pnom = nominals[pname][0]
         # the two sided systematics in trees
         for ud in _systematic_ud_prefixes:
             if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
@@ -426,7 +487,7 @@ def total_systematic_histogram(root_file, hist_name=None,
                 logger.warning(hname+' systematic not available!')
                 continue
             arr        = hist2array(root_file.Get(hname))
-            total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+            total_band = total_band + (pnom-arr)*(pnom-arr)
         # the hists from weights
         for wud in _systematic_weights:
             u_ws, d_ws = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
@@ -441,32 +502,30 @@ def total_systematic_histogram(root_file, hist_name=None,
                     logger.warning(hname+' systematic not available for process '+pname+'!')
                     continue
                 arr        = hist2array(root_file.Get(hname))
-                total_band = total_band + (proc_nom-arr)*(proc_nom-arr)
+                total_band = total_band + (pnom-arr)*(pnom-arr)
         # lumi uncertainty on fixed backgrounds
         if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes':
-            total_band = total_band + (0.0374*proc_nom)*(0.0374*proc_nom)
+            total_band = total_band + (0.0374*pnom)*(0.0374*pnom)
         # ttbar modeling uncertainties
-        if pname == 'ttbar' and ('ttbar_FAST_main_nominal_'+hist_name) in listofkeys:
-            fast_nom = hist2array(root_file.Get('ttbar_FAST_main_nominal_'+hist_name))
-            if ('ttbar_FAST_ARU_nominal_'+hist_name) in listofkeys \
-               and('ttbar_FAST_ARD_nominal_'+hist_name) in listofkeys:
-                ARU         = hist2array(root_file.Get('ttbar_FAST_ARU_nominal_'+hist_name))
-                ARD         = hist2array(root_file.Get('ttbar_FAST_ARD_nominal_'+hist_name))
-                full_ARU    = ARU/fast_nom*proc_nom
-                full_ARD    = ARD/fast_nom*proc_nom
+        if pname == 'ttbar' and ('ttbar_FULL_main_nominal_'+hist_name) in listofkeys:
+            fast_nom = hist2array(root_file.Get('ttbar_FULL_main_nominal_'+hist_name))
+            if ('ttbar_FULL_sysARup_nominal_'+hist_name) in listofkeys \
+               and('ttbar_FULL_sysARdown_nominal_'+hist_name) in listofkeys:
+                full_ARU         = hist2array(root_file.Get('ttbar_FULL_sysARup_nominal_'+hist_name))
+                full_ARD         = hist2array(root_file.Get('ttbar_FULL_sysARdown_nominal_'+hist_name))
                 total_band += np.power(0.5*(full_ARU-full_ARD),2)
             else:
-                logger.warning('ttbar additional radiation histograms not present')
-            if ('ttbar_FAST_FH_nominal_'+hist_name) in listofkeys:
-                FH          = hist2array(root_file.Get('ttbar_FAST_FH_nominal_'+hist_name))
-                full_FH     = FH/fast_nom*proc_nom
-                total_band += np.power(proc_nom-full_FH,2)
+                logger.warning('ttbar additional radiation sys histograms not present')
+            if ('ttbar_FULL_sysFH_nominal_'+hist_name) in listofkeys:
+                full_FH          = hist2array(root_file.Get('ttbar_FULL_sysFH_nominal_'+hist_name))
+                total_band += np.power(pnom-full_FH,2)
             else:
-                logger.warning('ttbar hadronization histograms not present')
-            if ('ttbar_FAST_HS_nominal_'+hist_name) in listofkeys:
-                HS          = hist2array(root_file.Get('ttbar_FAST_HS_nominal_'+hist_name))
-                full_HS     = HS/fast_nom*proc_nom
-                total_band += np.power(proc_nom-full_HS,2)
+                logger.warning('ttbar hadronization sys histograms not present')
+            if ('ttbar_FULL_sysHS_nominal_'+hist_name) in listofkeys:
+                full_HS          = hist2array(root_file.Get('ttbar_FULL_sysHS_nominal_'+hist_name))
+                total_band += np.power(pnom-full_HS,2)
+            else:
+                logger.warning('ttbar hard scattering sys histograms not present')
         elif pname == 'ttbar':
             logger.warning('Cannot add ttbar modeling systematics to band')
         else:
@@ -479,105 +538,3 @@ def total_systematic_histogram(root_file, hist_name=None,
         nom_stater = np.sqrt(nom_stater)
         return nom_h, total_band, edges, nom_stater
     return nom_h, total_band, edges
-
-
-
-
-
-#####################################################
-#####################################################
-#####################################################
-## OLD JSON BASED STUFF BAILING ON THIS IN THE FUTURE    
-#####################################################
-#####################################################
-#####################################################
-#####################################################
-def json2hists(jsonfile, outfilename='aida_histograms.root', tree_name='nominal'):
-
-    """
-    A function to generate histograms and store them in a ROOT file
-    based on a json configuration
-
-    Parameters
-    ----------
-    jsonfile : the input json file
-    outfilename : the output ROOT file name
-    tree_name : AIDA tree suffix (nominal, EG_RESOLUTION_ALL__1up, etc)
-         if ALL, use on all systematic trees defined in meta.py
-    """
-
-    _histProps  = namedtuple('_histProps',['var','binning','cut'])
-    if tree_name == 'ALL':
-        json2hists(jsonfile,outfilename,'nominal')
-        for tn in _systematic_trees:
-            json2hists(jsonfile,outfilename,tn)
-        return True
-    topJson = json.load(open(jsonfile))
-    lumi    = topJson['lumi']
-    logger.info('Scaling to '+str(lumi)+' /fb')
-    hists   = {}
-    for hist in topJson['histograms']:
-        if tree_name == 'nominal':
-            logger.info('Histogram: '+hist['name']+
-                        '\t| var: '+hist['var']+
-                        '\t| bins: '+str(hist['bins'])+
-                        '\t| cut: '+hist['cut'])
-        hists[hist['name']] = _histProps._make([hist['var'],hist['bins'],hist['cut']])
-
-    sorted_files = sort_files_from_txt(topJson['files'],topJson['procs'])
-    chains = { k.split('_')[0] : ROOT.TChain('AIDA_'+tree_name) for k in sorted_files }
-    chains['Fakes'] = ROOT.TChain('AIDAfk_'+tree_name)
-    for k, v in sorted_files.items():
-        if k == 'Data' and tree_name != 'nominal':
-            continue
-        for vv in v:
-            chains[k.split('_')[0]].Add(vv)
-            if 'Data' not in k:
-                chains['Fakes'].Add(vv)
-
-    out = ROOT.TFile(outfilename,'UPDATE')
-    lok = []
-    for o in out.GetListOfKeys():
-        lok.append(str(o.GetName()))
-    logger.info('Writing histograms using AIDA_'+tree_name)
-
-    do_weight_sys = True
-    for name, chain in chains.items():
-        if name == 'Data' and tree_name != 'nominal':
-            continue
-        for histn, props in hists.items():
-            weight_name = 'nomWeightwLum'
-            if 'Data' in name: cut = props.cut
-            else: cut = str(lumi)+'*'+weight_name+'*'+props.cut
-            hname = tree_name+'_'+name.split('_')[0]+'_'+histn
-            if hname in lok:
-                logger.warning(hname+' Already in output file')
-                pass
-            else:
-                h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
-                h.Write()
-            if tree_name == 'nominal' and 'Data' not in name and do_weight_sys:
-                for systW in _systematic_weights:
-                    for ud in systW:
-                        cut = str(lumi)+'*'+ud+'*'+props.cut
-                        hname = tree_name+'_'+name.split('_')[0]+'_'+histn+'_'+ud.split('wLum_')[-1]
-                        if hname in lok:
-                            logger.warning(hname+' Already in output file')
-                            pass
-                        else:
-                            h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
-                            h.Write()
-            if tree_name == 'nominal' and 'Ztautau' in name and do_weight_sys:
-                for i in range(1,115):
-                    cut = str(lumi)+'*weightSyswLum_genWeight'+str(i)+'*'+props.cut
-                    hname = tree_name+'_'+name.split('_')[0]+'_'+histn+'_genWeight'+str(i)
-                    if hname in lok:
-                        logger.warning(hname+' Already in output file')
-                        pass
-                    else:
-                        h = tree2hist(chain,hname,props.binning,props.var,cut,overflow=True)
-                        h.Write()
-
-    out.Close()
-    return True
-
