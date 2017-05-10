@@ -24,11 +24,19 @@ if len(sys.argv) < 2:
 
 import aidapy.hist as aph
 import aidapy.plot as app
+import yaml
 import ROOT
 
 if args.gen_hists:
     aph.generate_hists(args.yaml_config, output=args.out_file)
 
 if args.gen_plots:
-    for p in args.gen_plots:
-        app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
+    if len(args.gen_plots) == 1 and '.yaml' in args.gen_plots[0]:
+        print("OPENING YAML")
+        with open(args.gen_plots[0]) as f:
+            yaml_top = yaml.load(f)
+        for h in yaml_top:
+            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h)
+    else:
+        for p in args.gen_plots:
+            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)

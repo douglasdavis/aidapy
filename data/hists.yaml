@@ -9,7 +9,15 @@ met_0j:
 met_1j:
   var: 'met'
   cut: '!SS&&elmu&&njets==1'
-  bins: [10,0,100]
+  bins: [20,0,200]
+met_1j0b:
+  var: 'met'
+  cut: '!SS&&elmu&&njets==1&&nbjets==0'
+  bins: [20,0,200]
+met_1j1b:
+  var: 'met'
+  cut: '!SS&&elmu&&njets==1&&nbjets==1'
+  bins: [20,0,200]
 met_1pj:
   var: 'met'
   cut: '!SS&&elmu&&njets>=1'

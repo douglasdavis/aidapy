@@ -297,7 +297,6 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     ## histograms from the fastsim samples.  This is hard coded naming
     ## based on YAML naming defined in the template.
     if aida_tree == 'nominal' and do_F2F:
-        hn = hist_name
         output_file = ROOT.TFile(output,'UPDATE')
         listofkeys  = [str(o.GetName()) for o in output_file.GetListOfKeys()]
 
@@ -320,16 +319,17 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                 full_h.Write()
 
         for hist_name in hist_dict:
-            pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hist_name),
+            hn = hist_name
+            pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hn),
                                            return_edges=True, return_err=True)
             edges = edges[0]
             bins = (pnom.size,edges[0],edges[-1])
-            fast_nom, fast_nom_e = hist2array(output_file.Get('ttbar_FAST_main_nominal_'+hist_name),
+            fast_nom, fast_nom_e = hist2array(output_file.Get('ttbar_FAST_main_nominal_'+hn),
                                               return_err=True)
 
             ## additonal radiation
-            if 'ttbar_FAST_sysARup_nominal_'+hist_name in listofkeys \
-               and 'ttbar_FAST_sysARdown_nominal_'+hist_name in listofkeys:
+            if 'ttbar_FAST_sysARup_nominal_'+hn in listofkeys \
+               and 'ttbar_FAST_sysARdown_nominal_'+hn in listofkeys:
                 f2f('ttbar_FAST_sysARup_nominal_'+hn, 'ttbar_FULL_sysARup_nominal_'+hn,
                     fast_nom, pnom, fast_nom_e, perr, bins)
                 f2f('ttbar_FAST_sysARdown_nominal_'+hn,'ttbar_FULL_sysARdown_nominal_'+hn,
@@ -338,14 +338,14 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                 logger.warning('Cannot find ttbar additional radiation FAST hists')
 
             ## factorization/hadronization
-            if 'ttbar_FAST_sysFH_nominal_'+hist_name in listofkeys:
+            if 'ttbar_FAST_sysFH_nominal_'+hn in listofkeys:
                 f2f('ttbar_FAST_sysFH_nominal_'+hn, 'ttbar_FULL_sysFH_nominal_'+hn,
                     fast_nom, pnom, fast_nom_e, perr, bins)
             else:
                 logger.warning('Cannot find ttbar factorization/hadronization FAST hists')
 
             ## hard scattering
-            if 'ttbar_FAST_sysHS_nominal_'+hist_name in listofkeys:
+            if 'ttbar_FAST_sysHS_nominal_'+hn in listofkeys:
                 f2f('ttbar_FAST_sysHS_nominal_'+hn, 'ttbar_FULL_sysHS_nominal_'+hn,
                     fast_nom, pnom, fast_nom_e, perr, bins)
             else:
