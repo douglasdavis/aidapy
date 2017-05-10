@@ -33,7 +33,7 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
     This algorithm is Copyright (c) 2012-2017, The root_numpy developers
     See disclaimer here: https://github.com/scikit-hep/root_numpy/blob/master/LICENSE
 
-    This function is a small clone of root_numpy.hist2array for 1D histograms
+    This function is an incomplete clone of root_numpy.hist2array for 1D histograms
     https://github.com/scikit-hep/root_numpy/blob/master/root_numpy/_hist.py
 
     Parameters
@@ -96,6 +96,40 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
     if return_err:
         return array, error
     return array
+
+def array2hist(array, hist_name='hist_name', binning=(10,0,100), errors=None):
+    """
+    Create a ROOT histogram from a numpy array.
+
+    Parameters
+    ----------
+    array:     numpy array
+    hist_name: name for ROOT histogram
+    binning:   binning for ROOT histogram
+
+    Returns
+    -------
+    hist: ROOT.TH1
+      a ROOT TH1F or TH1D (dependent on the array dtype)
+
+    """
+    if array.size != binning[0]:
+        raise ValueError('Array size must be number of bins!')
+    padded = np.pad(array,(1,1),'constant')
+    if array.dtype == np.float32:
+        h = ROOT.TH1F(hist_name,hist_name,binning[0],binning[1],binning[2])
+    elif array.dtype == np.float64:
+        h = ROOT.TH1D(hist_name,hist_name,binning[0],binning[1],binning[2])
+    else:
+        raise TypeError('We can only handle np.float32 and np.float64')
+    h.Set(padded.size, padded)
+    h.SetEntries(array.size)
+    if errors is not None:
+        if errors.size != array.size:
+            raise ValueError('Error is not the same size as the array')
+        pe = np.pad(np.ascontiguousarray(errors, dtype=np.float64), (1,1), 'constant')
+        h.SetError(pe)
+    return h
 
 def shift_overflow(hist):
     """
