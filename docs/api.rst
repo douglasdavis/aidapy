@@ -9,13 +9,13 @@ Histogramming module (aidapy.hist)
 .. module:: aidapy.hist
 
 .. autofunction:: hist2array
+.. autofunction:: array2hist
 .. autofunction:: tree2hist
 .. autofunction:: shift_overflow
 .. autofunction:: generate_mc_hists
 .. autofunction:: generate_data_hists
 .. autofunction:: generate_hists
 .. autofunction:: total_systematic_histogram
-.. autofunction:: json2hists
 
 Metadata access module (aidapy.meta)
 ------------------------------------
