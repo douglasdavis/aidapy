@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+AIDA Python Library
+"""
 import pkg_resources
 import logging
 

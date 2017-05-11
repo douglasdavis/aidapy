@@ -1,3 +1,7 @@
+"""
+Module for generating and manipulation histograms for AIDA
+"""
+
 from .utils import hist2array
 from .utils import array2hist
 from .utils import shift_overflow

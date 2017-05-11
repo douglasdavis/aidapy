@@ -15,11 +15,16 @@ def runAIDALoop_on_tree(yaml_file, tree_name='nominal', outpfx='.', dry=False,
 
     Parameters
     ----------
-    yaml_file: the YAML file organzing the processes and DSIDs.
-    tree_name: the AIDA tree name to process.
-    outpfx:    the output prefix tacked onto the output file names.
-    atndir:    AnalysisTop ntuple directory.
-    dry:       Only print commands, don't execute.
+    yaml_file: str
+      Path to the YAML file organzing the processes and DSIDs.
+    tree_name: str
+      Name of the AIDA tree name to process.
+    outpfx: str
+      The output prefix tacked onto the beginning of the output file names.
+    atndir: str
+      Path to AnalysisTop ntuple directory.
+    dry: bool
+      Only print commands, don't execute.
     """
     if tree_name == 'ALL':
         for tn in apm._systematic_trees:

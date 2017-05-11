@@ -11,24 +11,24 @@ def hist2array(hist, include_overflow=False, copy=True, return_edges=False, retu
 
     Parameters
     ----------
-    hist : ROOT TH1
+    hist: ROOT.TH1
         The ROOT histogram to convert
     include_overflow: bool, optional (default=False)
         If true, the over and underflow bins will be part of the array
-    copy : bool, optional (default=True)
+    copy: bool, optional (default=True)
         If true copy the underlying array to own its memory
-    return_edges : bool, optional (default=False)
+    return_edges: bool, optional (default=False)
         If true, return bin edges
-    return_err : bool, optional (default=False)
+    return_err: bool, optional (default=False)
         If true, return the sqrt(sum(weights squared))
 
     Returns
     -------
-    hist : numpy.ndarray
+    numpy.ndarray
         NumPy array with bin heights
-    edges : list of numpy.ndarray
+    list(numpy.ndarray)
         A list of arrays. One for each axis' bin edges
-    error : numpy.ndarray
+    numpy.ndarray
         NumPy array of sqrt(sum(weights squared))
     """
     if isinstance(hist, ROOT.TH1F):
@@ -76,15 +76,17 @@ def array2hist(array, hist_name='hist_name', binning=(10,0,100), errors=None):
 
     Parameters
     ----------
-    array:     numpy array
-    hist_name: name for ROOT histogram
-    binning:   binning for ROOT histogram
+    array: np.ndarray
+      numpy array where the elements are bin heights
+    hist_name: str
+      name for ROOT histogram
+    binning: tuple
+      binning for ROOT histogram
 
     Returns
     -------
-    hist: ROOT.TH1
+    ROOT.TH1
       a ROOT TH1F or TH1D (dependent on the array dtype)
-
     """
     if array.size != binning[0]:
         raise ValueError('Array size must be number of bins!')
@@ -111,8 +113,8 @@ def shift_overflow(hist):
 
     Parameters
     ----------
-    hist : The ROOT histogram
-
+    hist: ROOT.TH1
+      The ROOT histogram
     """
     if not isinstance(hist, ROOT.TH1):
         raise TypeError('Argument must be 1D ROOT histogram!')
@@ -130,17 +132,21 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
 
     Parameters
     ----------
-    tree : The ROOT tree or chain
-    hist_name : the name-in-memory of the histogram to be created
-    binning : the binning of the histogram (nbins,xmin,xmax)
-    var : string for the variable in the tree to histogram
-    cut : the selection string
+    tree: ROOT.TTree or ROOT.TChain
+      The ROOT tree or chain
+    hist_name: str
+      The name-in-memory of the histogram to be created
+    binning: tuple
+      The binning of the histogram (nbins,xmin,xmax)
+    var: str
+      The variable (branch name) in the tree to histogram
+    cut: str
+      The selection string handed to TTree::Draw
 
     Returns
     -------
     ROOT.TH1F
         The ROOT histogram created
-
     """
     if not isinstance(tree, ROOT.TTree):
         raise TypeError('Must be ROOT TTree or TChain')

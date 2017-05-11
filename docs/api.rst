@@ -34,3 +34,10 @@ Plotting module (aidapy.plot)
 
 .. autofunction:: hplot_root
 .. autofunction:: hplot_mpl
+
+Ntuple production module (aidapy.ntuple)
+----------------------------------------
+
+.. module:: aidapy.ntuple
+
+.. autofunction:: runAIDALoop_on_tree

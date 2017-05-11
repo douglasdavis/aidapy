@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Handling AIDA histograms
-"""
 
 from __future__ import print_function
 
@@ -62,16 +59,25 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
 
     Parameters
     ----------
-    mc_yaml_file: A YAML files which organizes MC files
-    hist_yaml:    A YAML file which defines the desired histograms
-    mc_prefix:    The path to where MC files exist
-    aida_tree:    Which AIDA tree to use to build the histograms
-    lumi:         What luminosity to scale to
-    ignore:       Different process prefixes (defined in the MC YAML file) to ignore
-    output:       Name of output ROOT file
-    Z_genWeights: Build histograms using the generator weights available in Ztautau
-    do_F2F:       Do Fast to Full histograms (scale fast sim hists to appropriate "full" hists)
-
+    mc_yaml_file: str
+      Path to YAML file which organizes MC files
+    hist_yaml: str
+      Path to YAML file which defines the desired histograms
+    mc_prefix: str
+      The path to where MC files exist
+    aida_tree: str
+      Which AIDA tree to use to build the histograms
+    lumi: float
+      What luminosity to scale to
+    ignore: list
+      Different process prefixes (defined in the MC YAML file) to ignore
+    output: str
+      Path and name of output ROOT file
+    Z_genWeights: bool
+      Build histograms using the generator weights available in Ztautau
+    do_F2F: bool
+      Do Fast to Full histograms (try scale fast sim hists to appropriate "full" hists).
+      Only for nominal trees.
     """
     # provide file dict to not rebuild if it exists somewhere.
     if provide_file_dict is not None:
@@ -199,10 +205,12 @@ def generate_data_hists(data_root_file, hist_yaml, output='out.root'):
 
     Parameters
     ----------
-    data_root_file: ROOT file containing AIDA ntuple
-    hist_yaml:      A YAML file which defines the desired histograms
-    output:         Name of output ROOT file
-
+    data_root_file: ROOT.TFile
+      ROOT file containing AIDA ntuple
+    hist_yaml: str
+      Path to a YAML file which defines the desired histograms
+    output: str
+      Path and name of output ROOT file
     """
     chain = ROOT.TChain('AIDA_nominal')
     chain.Add(data_root_file)
@@ -233,9 +241,12 @@ def generate_hists(yaml_config, output='out.root', systematics='ALL'):
 
     Parameters
     ----------
-    yaml_config: Path to the YAML config file
-    output:      Name of output ROOT file
-    systematics: Which systematic trees to process. If not 'ALL', provide a list
+    yaml_config: str
+      Path to the YAML config file
+    output: str
+      Name of output ROOT file
+    systematics: str or list
+      Which systematic trees to process. If not 'ALL', provide a list
     """
     with open(yaml_config) as f:
         config = yaml.load(f)
@@ -271,9 +282,12 @@ def total_systematic_histogram(root_file, hist_name=None,
 
     Parameters
     ----------
-    root_file : the ROOT file with the histograms
-    hist_name : the name of the histogram to generate the band for (must exist in ROOT file!)
-    proc_names : the names of the processes contributing to the band (must exist in ROOT file!)
+    root_file: ROOT.TFile
+      The ROOT file with the histograms
+    hist_name: str
+      The name of the histogram to generate the band for (must exist in ROOT file!)
+    proc_names: str
+      The names of the processes contributing to the band (must exist in ROOT file!)
 
     Returns
     -------
@@ -283,7 +297,6 @@ def total_systematic_histogram(root_file, hist_name=None,
        the systematic error in each bin
     numpy.ndarray
        the edges of the histogram bins
-
     """
     if hist_name is None:
         logger.error('Why no histogram name?')

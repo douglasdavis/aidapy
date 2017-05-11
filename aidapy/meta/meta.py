@@ -32,12 +32,13 @@ def get_proc_gen(dsid):
 
     Parameters
     ----------
-    dsid : self evident
+    dsid: int
+      self evident
 
     Returns
     -------
-    k : str
-        the [process]_[generator] string
+    k: str
+      the [process]_[generator] string
 
     """
     for k, v in _dsid_table.items():
@@ -65,12 +66,13 @@ def get_dsids(key):
     
     Parameters
     ----------
-    key : the string (available listed above)
+    key: str
+      the string (available listed above)
 
     Returns
     -------
     list
-        List of DSIDs associated with the key
+      List of DSIDs associated with the key
     """
     if key not in _dsid_table:
         raise ValueError(str(key)+' not Available')
@@ -84,7 +86,8 @@ def proc_gen_from_file(rootfile):
 
     Parameters
     ----------
-    rootfile : path to ROOT file _or_ the ROOT file itself
+    rootfile: str
+      Path to ROOT file _or_ the ROOT file itself
 
     Returns
     -------
@@ -112,8 +115,9 @@ def sort_files_from_txt(txtfile, procs_and_gens):
 
     Parameters
     ----------
-    txtfile : plain text file listing the full path of all the files to sort
-    procs_and_gens : list of [process]_[generator] strings you'd like in
+    txtfile: str
+      Plain text file listing the full path of all the files to sort
+      procs_and_gens : list of [process]_[generator] strings you'd like in
       the final dictionary
 
     Returns
