@@ -76,25 +76,6 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     axerr.set_ylim([0.5,1.5])
     axerr.set_xlim([edges[0],edges[-1]])
     axerr.plot(edges,np.array([1 for _ in edges]),'k-')
-    if 'met' in hist_name:
-        xpref = r'$E_\mathrm{T}^\mathrm{miss}$ [GeV]'
-    elif 'llpT' in hist_name:
-        xpref = r'Leading Lepton $p_\mathrm{T}$ [GeV]'
-    elif 'mu' in hist_name:
-        xpref = r'Muon $p_\mathrm{T}$ [GeV]'
-    elif 'el' in hist_name:
-        xpref = r'Electron $p_\mathrm{T}$ [GeV]'
-    else:
-        xpref = r''
-    if '_all' in hist_name:
-        xsuf = r''
-    elif '_0j' in hist_name:
-        xsuf = r'$(N_\mathrm{jets} = 0)$'
-    elif '_1pj' in hist_name:
-        xsuf = r'$(N_\mathrm{jets} \geq 1)$'
-    else:
-        xsuf = ''
-    xtitle = xpref+' '+xsuf
     if 'pT' in hist_name or '_2bins' in hist_name:
         logy = True
     axerr.set_xlabel(xtitle)

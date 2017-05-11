@@ -2,42 +2,52 @@ met_all:
   var: 'met'
   cut: '!SS&&elmu'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV]','Events']
 met_0j:
   var: 'met'
   cut: '!SS&&elmu&&njets==0'
   bins: [10,0,100]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 0)$','Events']
 met_1j:
   var: 'met'
   cut: '!SS&&elmu&&njets==1'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1)$','Events']
 met_1j0b:
   var: 'met'
   cut: '!SS&&elmu&&njets==1&&nbjets==0'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{b-\mathrm{jets}}=0)$','Events']
 met_1j1b:
   var: 'met'
   cut: '!SS&&elmu&&njets==1&&nbjets==1'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{b-\mathrm{jets}}=1)$','Events']
 met_1pj:
   var: 'met'
   cut: '!SS&&elmu&&njets>=1'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} \geq 1)$','Events']
 met_2pj:
   var: 'met'
   cut: '!SS&&elmu&&njets>=2'
   bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} \geq 2)$','Events']
 njets:
   var: 'njets'
   cut: '!SS&&elmu'
   bins: [8,-0.5,7.5]
+  mpltitles: ['$N_\mathrm{jets}$','Events']
 njets_2bins:
   var: 'njets'
   cut: '!SS&&elmu'
   bins: [2,-0.5,1.5]
+  mpltitles: ['$N_\mathrm{jets}$','Events']
 njets_3bins:
   var: 'njets'
   cut: '!SS&&elmu'
   bins: [3,-0.5,2.5]
+  mpltitles: ['$N_\mathrm{jets}$','Events']
 #elpT_all:
 #  var: 'elpT'
 #  cut: '!SS&&elmu'

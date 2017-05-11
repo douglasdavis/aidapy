@@ -477,23 +477,23 @@ def total_systematic_histogram(root_file, hist_name=None,
             if hname_down not in listofkeys:
                 logger.warning(hname_down+' systematic not available for process '+pname+'!')
                 continue
-            arr_up     = hist2array(root_file.Get(hname_up))
-            arr_down   = hist2array(root_file.Get(hname_down))
-            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+            arr_up      = hist2array(root_file.Get(hname_up))
+            arr_down    = hist2array(root_file.Get(hname_down))
+            total_band += (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # the one sided systematics in trees, symmetrize it
         for osed in _systematic_singles:
             hname = pname+'_FULL_main_'+osed+'_'+hist_name
             if hname not in listofkeys:
                 logger.warning(hname+' systematic not available!')
                 continue
-            arr        = hist2array(root_file.Get(hname))
-            total_band = total_band + (pnom-arr)*(pnom-arr)
+            arr         = hist2array(root_file.Get(hname))
+            total_band += (pnom-arr)*(pnom-arr)
         # the hists from weights
         for wud in _systematic_weights:
-            u_ws, d_ws = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
-            arr_up     = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
-            arr_down   = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
-            total_band = total_band + (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
+            u_ws, d_ws  = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
+            arr_up      = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
+            arr_down    = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
+            total_band +=(0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # Ztautau generator weights
         if 'Ztautau' in pname and do_gen_weights:
             for i in range(1,115): ## all 115 explode the sys band. need to look into this
@@ -501,11 +501,11 @@ def total_systematic_histogram(root_file, hist_name=None,
                 if hname not in listofkeys:
                     logger.warning(hname+' systematic not available for process '+pname+'!')
                     continue
-                arr        = hist2array(root_file.Get(hname))
-                total_band = total_band + (pnom-arr)*(pnom-arr)
+                arr         = hist2array(root_file.Get(hname))
+                total_band += (pnom-arr)*(pnom-arr)
         # lumi uncertainty on fixed backgrounds
         if pname == 'Diboson' or pname == 'RareSM' or pname == 'Fakes':
-            total_band = total_band + (0.0374*pnom)*(0.0374*pnom)
+            total_band += (0.0374*pnom)*(0.0374*pnom)
         # ttbar modeling uncertainties
         if pname == 'ttbar' and ('ttbar_FULL_main_nominal_'+hist_name) in listofkeys:
             fast_nom = hist2array(root_file.Get('ttbar_FULL_main_nominal_'+hist_name))

@@ -36,7 +36,7 @@ if args.gen_plots:
         with open(args.gen_plots[0]) as f:
             yaml_top = yaml.load(f)
         for h in yaml_top:
-            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h)
+            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h,xtitle=yaml_top[h]['mpltitles'][0],ytitle=yaml_top[h]['mpltitles'][1])
     else:
         for p in args.gen_plots:
             app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
