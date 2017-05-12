@@ -49,6 +49,8 @@ def runAIDALoop_on_tree(yaml_file, tree_name='nominal', outpfx='.', dry=False,
             else: raise ValueError('impossible????')
             if fof in vals1:
                 for samptype, vals2 in vals1[fof].items():
+                    if samptype != 'main' and fof == 'FULL' and tree_name != 'nominal':
+                        continue
                     for entry in vals2['DSIDs']:
                         if isinstance(entry,list):
                             for i in range(entry[0],entry[1]+1):
@@ -69,10 +71,11 @@ def runAIDALoop_on_tree(yaml_file, tree_name='nominal', outpfx='.', dry=False,
         for cc in c:
             print(cc)
         if dry: hashbang = '#'
-        if dry: hashbing = ''
+        else: hashbang = ''
         processes = [Popen(hashbang+cc, shell=True) for cc in c]
         for p in processes: p.wait()
 
 if __name__ == '__main__':
     aidapydir = str(os.getenv('AIDAPYDIR'))
-    runAIDALoop_on_tree(aidapydir+'/data/files.yaml', tree_name='ALL', dry=True)
+    runAIDALoop_on_tree(aidapydir+'/data/files.yaml', tree_name='ALL', dry=False,
+                        outpfx='/afs/cern.ch/work/d/ddavis/public/aida/aidantuples/current/v2430')
