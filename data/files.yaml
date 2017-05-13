@@ -88,3 +88,10 @@ Wjets:
     main:
       DSIDs:
         - [364156, 364197]
+
+RareSM:
+  FULL:
+    main:
+      DSIDs:
+        - [410066, 410070] # ttV
+        - [410073, 410075] # ttV
