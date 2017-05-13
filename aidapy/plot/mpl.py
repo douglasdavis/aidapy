@@ -35,7 +35,7 @@ def canvas_with_ratio(figsize=(8,7),height_ratios=[3.65,1],
     return fig, ax0, ax1
 
 def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
-              proc_names=['Wt','ttbar','Fakes','WW','Diboson','Ztautau']):#,'RareSM']):
+              proc_names=['Wt','ttbar','Fakes','WW','Diboson','Ztautau','RareSM']):
     nominals = { pname : root_file.Get(pname+'_FULL_main_nominal_'+hist_name) for pname in proc_names }
     nominals = { pname : hist2array(h,return_edges=True) for pname, h in nominals.items() }
     data     = root_file.Get('Data_'+hist_name)
@@ -43,15 +43,14 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     nom_h, total_band, edges, staterr = total_systematic_histogram(root_file,hist_name,proc_names,
                                                                    return_stat_error=True)
     centers  = np.delete(edges,[0])-(np.ediff1d(edges)/2.0)
-    to_stack = [nominals[name][0] for name in ['Diboson','Fakes','WW','Wt','Ztautau','ttbar']]
-    cols     = ['black','gray','green','blue','orange','white']
+    to_stack = [nominals[name][0] for name in ['RareSM','Diboson','Fakes','WW','Wt','Ztautau','ttbar']]
+    cols     = ['darkred','black','gray','green','blue','orange','white']
     fig,ax,axerr = canvas_with_ratio()
-    ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko',label=r'$\mathrm{Data}$')
+    ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko',label=r'Data')
     ax.hist([centers for _ in to_stack],weights=to_stack,bins=edges,stacked=True,
             color=cols,histtype='stepfilled',
-            label=[r'Diboson',r'Fake/NP (MC)',
+            label=[r'Rare SM',r'Diboson',r'Fake/NP (MC)',
                    r'WW',r'Wt',r'$Z\rightarrow\tau\tau$',r'$t\bar{t}$'])
-    #ax.errorbar(centers,nom_h,yerr=total_band,fmt='ro')
     syspatches = []
     syspatches = [patches.Rectangle((c-w/2,v-err),w,err*2,hatch='\\\\\\\\',fill=False,edgecolor='none')
                   for c, v, err, w in zip(centers,nom_h,total_band,np.ediff1d(edges))]
@@ -76,7 +75,8 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     axerr.set_ylim([0.5,1.5])
     axerr.set_xlim([edges[0],edges[-1]])
     axerr.plot(edges,np.array([1 for _ in edges]),'k-')
-    if 'pT' in hist_name or '_2bins' in hist_name:
+    log_axes = ['pT','_2bins','_3bins']
+    if any(term in hist_name for term in log_axes):
         logy = True
     axerr.set_xlabel(xtitle)
     ax.set_ylabel(ytitle)
