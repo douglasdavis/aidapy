@@ -105,6 +105,8 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     output_file = ROOT.TFile(output,'UPDATE')
     rootkeys    = [str(o.GetName()) for o in output_file.GetListOfKeys()]
     for pname, chain in chains.items():
+        if 'main' not in pname and aida_tree != 'nominal':
+            continue
         for hist_name, hist_props in hist_dict.items():
             hname  = pname+'_'+aida_tree+'_'+hist_name
             if hname in rootkeys:

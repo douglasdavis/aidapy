@@ -1,5 +1,6 @@
 import numpy as np
 import ROOT
+import math
 
 def hist2array(hist, include_overflow=False, copy=True, return_edges=False, return_err=False):
     """

@@ -42,10 +42,10 @@ Wt:
     sysHS2:
       DSIDs:
         - 410164
-    #sysFH:
-    #  DSIDs:
-    #    - 410145
-    #    - 410146
+    sysFH:
+      DSIDs:
+        - 410145
+        - 410146
     sysARup:
       DSIDs:
         - 410103
