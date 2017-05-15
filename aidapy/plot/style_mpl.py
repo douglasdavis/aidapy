@@ -3,9 +3,6 @@
 """
 ATLAS-like style for matplotlib
 """
-__all__ = [
-    'style_mpl',
-]
 
 def style_mpl():
 
