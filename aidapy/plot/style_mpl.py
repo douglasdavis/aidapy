@@ -14,7 +14,7 @@ def style_mpl():
     STYLE['font.sans-serif'] = 'helvetica, Helvetica, Nimbus Sans L, Mukti Narrow, FreeSans'
     STYLE['font.family'] = 'sans-serif'
     #STYLE['mathtext.fontset'] = 'stixsans'
-    #STYLE['mathtext.fontset'] = 'dejavusans'
+    STYLE['mathtext.fontset'] = 'dejavusans'
     #STYLE['mathtext.fontset'] = 'stix'
     STYLE['mathtext.default'] = 'rm'
     # helvetica usually not present on linux

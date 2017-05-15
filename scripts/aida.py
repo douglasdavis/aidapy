@@ -14,6 +14,8 @@ parser.add_argument('-y','--yaml-config',dest='yaml_config',type=str,
                     help='Path to YAML config')
 parser.add_argument('-p','--generate-plots',dest='gen_plots',nargs='+',type=str,
                     help='Make plots (HARD CODED UNDER CONSTRUCTION)')
+parser.add_argument('-r','--root-plots',dest='root_plots',action='store_true',default=False,
+                    help='Flag to plot with ROOT instead of matplotlib')
 parser.add_argument('-o','--out-file',type=str,dest='out_file',default='aida_histograms.root',
                     help='Name of output file')
 
@@ -39,4 +41,7 @@ if args.gen_plots:
             app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h,xtitle=yaml_top[h]['mpltitles'][0],ytitle=yaml_top[h]['mpltitles'][1])
     else:
         for p in args.gen_plots:
-            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
+            if args.root_plots:
+                app.hplot_root(ROOT.TFile('aida_histograms.root','read'),p)
+            else:
+                app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
