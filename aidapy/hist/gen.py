@@ -231,9 +231,9 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
             ## additional radiation
             if 'Wt_FAST_sysARup_nominal_'+hn in listofkeys \
                and 'Wt_FAST_sysARdown_nominal_'+hn in listofkeys:
-                fast2full('Wt_FAST_sysARup_nominal_'+hn, 'ttbar_FULL_sysARup_nominal_'+hn,
+                fast2full('Wt_FAST_sysARup_nominal_'+hn, 'Wt_FULL_sysARup_nominal_'+hn,
                           fast_nom, pnom, fast_nom_e, perr, bins)
-                fast2full('Wt_FAST_sysARdown_nominal_'+hn, 'ttbar_FULL_sysARdown_nominal_'+hn,
+                fast2full('Wt_FAST_sysARdown_nominal_'+hn, 'Wt_FULL_sysARdown_nominal_'+hn,
                           fast_nom, pnom, fast_nom_e, perr, bins)
             else:
                 logger.warning('Cannot find Wt addiational radiation FAST histograms')
