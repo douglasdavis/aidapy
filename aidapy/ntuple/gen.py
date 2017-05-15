@@ -78,4 +78,4 @@ def runAIDALoop_on_tree(yaml_file, tree_name='nominal', outpfx='.', dry=False,
 if __name__ == '__main__':
     aidapydir = str(os.getenv('AIDAPYDIR'))
     runAIDALoop_on_tree(aidapydir+'/data/files.yaml', tree_name='ALL', dry=False,
-                        outpfx='/afs/cern.ch/work/d/ddavis/public/aida/aidantuples/current/v2430')
+                        outpfx='/afs/cern.ch/work/d/ddavis/public/aida/aidantuples/current/v2430.1')

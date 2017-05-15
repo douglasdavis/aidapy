@@ -167,6 +167,10 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
 
         for hist_name in hist_dict:
             hn = hist_name
+
+            ########################################################
+            #### First ttbar #######################################
+            ########################################################
             pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hn),
                                            return_edges=True, return_err=True)
             edges = edges[0]
@@ -197,6 +201,45 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                     fast_nom, pnom, fast_nom_e, perr, bins)
             else:
                 logger.warning('Cannot find ttbar hard scattering FAST hists')
+            ########################################################
+            ########################################################
+
+            ########################################################
+            #### Now Wt ############################################
+            ########################################################
+            pnom, perr = hist2array(output_file.Get('Wt_FULL_main_nominal_'+hn), return_err=True)
+            fast_nom, fast_nom_e = hist2array(output_file.Get('Wt_FAST_main_nominal_'+hn),
+                                              return_err=True)
+
+            ## additional radiation
+            if 'Wt_FAST_sysARup_nominal_'+hn in listofkeys \
+               and 'Wt_FAST_sysARdown_nominal_'+hn in listofkeys:
+                f2f('Wt_FAST_sysARup_nominal_'+hn, 'ttbar_FULL_sysARup_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+                f2f('Wt_FAST_sysARdown_nominal_'+hn, 'ttbar_FULL_sysARdown_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find Wt addiational radiation FAST histograms')
+
+            ## factorization/hadrontization
+            if 'Wt_FAST_sysFH_nominal_'+hn in listofkeys:
+                f2f('Wt_FAST_sysFH_nominal_'+hn, 'Wt_FULL_sysFH_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find Wt factorization/hadronization FAST hists')
+
+            ## hard scattering
+            if 'Wt_FAST_sysHS1_nominal_'+hn in listofkeys \
+               and 'Wt_FAST_sysHS2_nominal_'+hn in listofkeys:
+                f2f('Wt_FAST_sysHS1_nominal_'+hn, 'Wt_FULL_sysHS1_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+                f2f('Wt_FAST_sysHS2_nominal_'+hn, 'Wt_FULL_sysHS2_nominal_'+hn,
+                    fast_nom, pnom, fast_nom_e, perr, bins)
+            else:
+                logger.warning('Cannot find Wt hard scattering FAST hists')
+            ########################################################
+            ########################################################
+
 
         output_file.Close()
 
