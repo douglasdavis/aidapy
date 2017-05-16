@@ -16,6 +16,7 @@ from .utils import array2hist
 from .utils import hist2array
 from .utils import shift_overflow
 from .utils import tree2hist
+from .utils import fast2full
 
 from aidapy.meta import _systematic_trees
 from aidapy.meta import _systematic_weights
@@ -144,43 +145,20 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     ## histograms from the fastsim samples.  This is hard coded naming
     ## based on YAML naming defined in the template.
     if aida_tree == 'nominal' and do_fast2full:
+
+        def check_and_write(h, keys):
+            """
+            Check if a histogram name is in a list of keys from a file,
+            if so shoot a warning, if not, shoot info and write the hist.
+            """
+            if str(h.GetName()) in keys:
+                logger.warning(str(h.GetName()+' already in file'))
+            else:
+                logger.info(h)
+                h.Write()
+
         output_file = ROOT.TFile(output,'UPDATE')
         listofkeys  = [str(o.GetName()) for o in output_file.GetListOfKeys()]
-
-        def fast2full(faststr, fullstr, fast_nom, pnom, fast_nom_e, pnom_err, bins):
-            """
-            This function does the fast to full histogram scaling.  Error is
-            assigned using standard error propagation.. since the error is
-            just statistical. The new "FULL" histogram is written to the tree.
-
-            Parameters
-            ----------
-            faststr: str
-              The string label of the fast sim systematic histogram already in the output file
-            fullstr: str
-              The new string label for the "full" sim systematic histogram to be stored
-            fast_nom: numpy.ndarray
-              An array of bin heights for the fast sim nominal histogram
-            pnom: numpy.ndarray
-              The processes full sim nominal histogram bin heights
-            fast_nom_e: numpy.ndarray
-               The statistical uncertainty in each bin (fast sim nominal)
-            pnom_err: numpy.ndarray
-               The statistical uncertainty in each bin (full sim nominal)
-            bin: tuple
-               The number of bins, left edge, and right edge (nbins,xmin,xmax)
-            """
-            fast_a, err  = hist2array(output_file.Get(faststr), return_err=True)
-            full_a       = (pnom/fast_nom)*fast_a
-            full_e_term  = np.power(fast_a/fast_nom*pnom_err,2)
-            full_e_term += np.power(pnom/fast_nom*err,2)
-            full_e_term += np.power(pnom*fast_a/(fast_nom*fast_nom)*fast_nom_e,2)
-            full_h       = array2hist(full_a, fullstr, bins, errors=np.sqrt(full_e_term))
-            if str(full_h.GetName()) in listofkeys:
-                logger.warning(str(full_h.GetName()+' already in file'))
-            else:
-                logger.info(full_h)
-                full_h.Write()
 
         for hist_name in hist_dict:
             hn = hist_name
@@ -198,24 +176,28 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
             ## additonal radiation
             if 'ttbar_FAST_sysARup_nominal_'+hn in listofkeys \
                and 'ttbar_FAST_sysARdown_nominal_'+hn in listofkeys:
-                fast2full('ttbar_FAST_sysARup_nominal_'+hn, 'ttbar_FULL_sysARup_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
-                fast2full('ttbar_FAST_sysARdown_nominal_'+hn,'ttbar_FULL_sysARdown_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'ttbar_FAST_sysARup_nominal_'+hn,
+                              'ttbar_FULL_sysARup_nominal_'+hn,fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'ttbar_FAST_sysARdown_nominal_'+hn,
+                              'ttbar_FULL_sysARdown_nominal_'+hn,fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find ttbar additional radiation FAST hists')
 
             ## factorization/hadronization
             if 'ttbar_FAST_sysFH_nominal_'+hn in listofkeys:
-                fast2full('ttbar_FAST_sysFH_nominal_'+hn, 'ttbar_FULL_sysFH_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'ttbar_FAST_sysFH_nominal_'+hn,'ttbar_FULL_sysFH_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find ttbar factorization/hadronization FAST hists')
 
             ## hard scattering
             if 'ttbar_FAST_sysHS_nominal_'+hn in listofkeys:
-                fast2full('ttbar_FAST_sysHS_nominal_'+hn, 'ttbar_FULL_sysHS_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'ttbar_FAST_sysHS_nominal_'+hn,'ttbar_FULL_sysHS_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find ttbar hard scattering FAST hists')
             ########################################################
@@ -224,34 +206,39 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
             ########################################################
             #### Now Wt ############################################
             ########################################################
-            pnom, perr = hist2array(output_file.Get('Wt_FULL_main_nominal_'+hn), return_err=True)
-            fast_nom, fast_nom_e = hist2array(output_file.Get('Wt_FAST_main_nominal_'+hn),
+            pnom,perr = hist2array(output_file.Get('Wt_FULL_main_nominal_'+hn),return_err=True)
+            fast_nom,fast_nom_e = hist2array(output_file.Get('Wt_FAST_main_nominal_'+hn),
                                               return_err=True)
 
             ## additional radiation
             if 'Wt_FAST_sysARup_nominal_'+hn in listofkeys \
                and 'Wt_FAST_sysARdown_nominal_'+hn in listofkeys:
-                fast2full('Wt_FAST_sysARup_nominal_'+hn, 'Wt_FULL_sysARup_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
-                fast2full('Wt_FAST_sysARdown_nominal_'+hn, 'Wt_FULL_sysARdown_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'Wt_FAST_sysARup_nominal_'+hn,'Wt_FULL_sysARup_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'Wt_FAST_sysARdown_nominal_'+hn,'Wt_FULL_sysARdown_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find Wt addiational radiation FAST histograms')
 
             ## factorization/hadrontization
             if 'Wt_FAST_sysFH_nominal_'+hn in listofkeys:
-                fast2full('Wt_FAST_sysFH_nominal_'+hn, 'Wt_FULL_sysFH_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'Wt_FAST_sysFH_nominal_'+hn,'Wt_FULL_sysFH_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find Wt factorization/hadronization FAST hists')
 
             ## hard scattering
             if 'Wt_FAST_sysHS1_nominal_'+hn in listofkeys \
                and 'Wt_FAST_sysHS2_nominal_'+hn in listofkeys:
-                fast2full('Wt_FAST_sysHS1_nominal_'+hn, 'Wt_FULL_sysHS1_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
-                fast2full('Wt_FAST_sysHS2_nominal_'+hn, 'Wt_FULL_sysHS2_nominal_'+hn,
-                          fast_nom, pnom, fast_nom_e, perr, bins)
+                h = fast2full(output_file,'Wt_FAST_sysHS1_nominal_'+hn,'Wt_FULL_sysHS1_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'Wt_FAST_sysHS2_nominal_'+hn,'Wt_FULL_sysHS2_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
             else:
                 logger.warning('Cannot find Wt hard scattering FAST hists')
             ########################################################

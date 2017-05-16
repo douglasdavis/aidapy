@@ -127,7 +127,7 @@ def shift_overflow(hist):
     hist.SetBinContent(nb+1, 0.0)
     hist.SetBinError(nb+1, 0.0)
 
-def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
+def tree2hist(tree, hist_name, binning, var, cut, overflow=False, negatives_to_zero=False):
     """
     A function to create a histogram using TTree::Draw()
 
@@ -143,7 +143,10 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
       The variable (branch name) in the tree to histogram
     cut: str
       The selection string handed to TTree::Draw
-
+    overflow: bool
+      Shift the overflow bin the the last real bin
+    negatives_to_zero:
+      Make negative valued bins zero.
     Returns
     -------
     ROOT.TH1F
@@ -163,4 +166,45 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False):
     hist = ROOT.gDirectory.Get(str(hist_name))
     if overflow:
         shift_overflow(hist)
+    if negatives_to_zero:
+        for idx in (np.where(hist2array(hist) < 0)[0]):
+            hist.SetBinContent(idx+1,0.0)
     return hist
+
+def fast2full(root_file, faststr, fullstr, fast_nom, pnom, fast_nom_e, pnom_err, bins):
+    """
+    This function does the fast to full histogram scaling.  Error is
+    assigned using standard error propagation.. since the error is
+    just statistical. The new "FULL" histogram is written to the tree.
+
+    Parameters
+    ----------
+    root_file: ROOT.TFile
+        The ROOT file for all of our histograms
+    faststr: str
+        The string label of the fast sim systematic histogram already in the output file
+    fullstr: str
+        The new string label for the "full" sim systematic histogram to be stored
+    fast_nom: numpy.ndarray
+        An array of bin heights for the fast sim nominal histogram
+    pnom: numpy.ndarray
+        The processes full sim nominal histogram bin heights
+    fast_nom_e: numpy.ndarray
+        The statistical uncertainty in each bin (fast sim nominal)
+    pnom_err: numpy.ndarray
+        The statistical uncertainty in each bin (full sim nominal)
+    bin: tuple
+        The number of bins, left edge, and right edge (nbins,xmin,xmax)
+
+    Returns
+    -------
+    ROOT.TH1
+        "Full Sim" ROOT histogram associated with the original fast sim histogram.
+    """
+    fast_a, err  = hist2array(root_file.Get(faststr), return_err=True)
+    full_a       = (pnom/fast_nom)*fast_a
+    full_e_term  = np.power(fast_a/fast_nom*pnom_err,2)
+    full_e_term += np.power(pnom/fast_nom*err,2)
+    full_e_term += np.power(pnom*fast_a/(fast_nom*fast_nom)*fast_nom_e,2)
+    full_h       = array2hist(full_a, fullstr, bins, errors=np.sqrt(full_e_term))
+    return full_h
