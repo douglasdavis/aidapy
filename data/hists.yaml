@@ -43,68 +43,68 @@ njets_2bins:
   cut: '!SS&&elmu'
   bins: [2,-0.5,1.5]
   mpltitles: ['$N_\mathrm{jets}$','Events']
-njets_3bins:
-  var: 'njets'
-  cut: '!SS&&elmu'
-  bins: [3,-0.5,2.5]
-  mpltitles: ['$N_\mathrm{jets}$','Events']
-elpT_all:
-  var: 'elpT'
-  cut: '!SS&&elmu'
-  bins: [35,25,200]
-  mpltitles: ['Electron $p_\mathrm{T}$ [GeV]','Events']
-elpT_0j:
-  var: 'elpT'
-  cut: '!SS&&elmu&&njets==0'
-  bins: [35,25,200]
-  mpltitles: ['Electron $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} = 0)$','Events']
-elpT_1pj:
-  var: 'elpT'
-  cut: '!SS&&elmu&&njets>=1'
-  bins: [35,25,200]
-  mpltitles: ['Electron $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} \geq 1)$','Events']
-eleta_all:
-  var: 'eleta'
-  cut: '!SS&&elmu'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Electron $\eta$','Events']
-eleta_0j:
-  var: 'eleta'
-  cut: '!SS&&elmu&&njets==0'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Electron $\eta$ $(N_\mathrm{jets} = 0)$','Events']
-eleta_1pj:
-  var: 'eleta'
-  cut: '!SS&&elmu&&njets>=1'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Electron $\eta$ $(N_\mathrm{jets} \geq 1)$','Events']
-mupT_all:
-  var: 'mupT'
-  cut: '!SS&&elmu'
-  bins: [35,25,200]
-  mpltitles: ['Muon $p_\mathrm{T}$ [GeV]','Events']
-mupT_0j:
-  var: 'mupT'
-  cut: '!SS&&elmu&&njets==0'
-  bins: [35,25,200]
-  mpltitles: ['Muon $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} = 0)$','Events']
-mupT_1pj:
-  var: 'mupT'
-  cut: '!SS&&elmu&&njets>=1'
-  bins: [35,25,200]
-  mpltitles: ['Muon $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} \geq 1)$','Events']
-mueta_all:
-  var: 'mueta'
-  cut: '!SS&&elmu'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Muon $\eta$','Events']
-mueta_0j:
-  var: 'mueta'
-  cut: '!SS&&elmu&&njets==0'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Muon $\eta$ $(N_\mathrm{jets} = 0)$','Events']
-mueta_1pj:
-  var: 'mueta'
-  cut: '!SS&&elmu&&njets>=1'
-  bins: [35,-2.5,2.5]
-  mpltitles: ['Muon $\eta$ $(N_\mathrm{jets} \geq 1)$','Events']
+#njets_3bins:
+#  var: 'njets'
+#  cut: '!SS&&elmu'
+#  bins: [3,-0.5,2.5]
+#  mpltitles: ['$N_\mathrm{jets}$','Events']
+#elpT_all:
+#  var: 'elpT'
+#  cut: '!SS&&elmu'
+#  bins: [35,25,200]
+#  mpltitles: ['Electron $p_\mathrm{T}$ [GeV]','Events']
+#elpT_0j:
+#  var: 'elpT'
+#  cut: '!SS&&elmu&&njets==0'
+#  bins: [35,25,200]
+#  mpltitles: ['Electron $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} = 0)$','Events']
+#elpT_1pj:
+#  var: 'elpT'
+#  cut: '!SS&&elmu&&njets>=1'
+#  bins: [35,25,200]
+#  mpltitles: ['Electron $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} \geq 1)$','Events']
+#eleta_all:
+#  var: 'eleta'
+#  cut: '!SS&&elmu'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Electron $\eta$','Events']
+#eleta_0j:
+#  var: 'eleta'
+#  cut: '!SS&&elmu&&njets==0'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Electron $\eta$ $(N_\mathrm{jets} = 0)$','Events']
+#eleta_1pj:
+#  var: 'eleta'
+#  cut: '!SS&&elmu&&njets>=1'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Electron $\eta$ $(N_\mathrm{jets} \geq 1)$','Events']
+#mupT_all:
+#  var: 'mupT'
+#  cut: '!SS&&elmu'
+#  bins: [35,25,200]
+#  mpltitles: ['Muon $p_\mathrm{T}$ [GeV]','Events']
+#mupT_0j:
+#  var: 'mupT'
+#  cut: '!SS&&elmu&&njets==0'
+#  bins: [35,25,200]
+#  mpltitles: ['Muon $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} = 0)$','Events']
+#mupT_1pj:
+#  var: 'mupT'
+#  cut: '!SS&&elmu&&njets>=1'
+#  bins: [35,25,200]
+#  mpltitles: ['Muon $p_\mathrm{T}$ [GeV] $(N_\mathrm{jets} \geq 1)$','Events']
+#mueta_all:
+#  var: 'mueta'
+#  cut: '!SS&&elmu'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Muon $\eta$','Events']
+#mueta_0j:
+#  var: 'mueta'
+#  cut: '!SS&&elmu&&njets==0'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Muon $\eta$ $(N_\mathrm{jets} = 0)$','Events']
+#mueta_1pj:
+#  var: 'mueta'
+#  cut: '!SS&&elmu&&njets>=1'
+#  bins: [35,-2.5,2.5]
+#  mpltitles: ['Muon $\eta$ $(N_\mathrm{jets} \geq 1)$','Events']

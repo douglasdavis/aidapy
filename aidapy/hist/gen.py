@@ -114,7 +114,7 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                 logger.warning(hname+' already in file')
             else:
                 cut = str(lumi)+'*nomWeightwLum*('+hist_props['cut']+')'
-                h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
                 logger.info(h)
                 h.Write()
             if aida_tree == 'nominal' and 'FAST' not in pname:
@@ -125,7 +125,7 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                             logger.warning(hname+' already in file')
                         else:
                             cut = str(lumi)+'*'+ud+'*('+hist_props['cut']+')'
-                            h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                            h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
                             logger.info(h)
                             h.Write()
             if aida_tree == 'nominal' and 'Ztautau' in pname and Z_genWeights:
@@ -135,7 +135,7 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
                         logger.warning(hname+' already in file')
                     else:
                         cut = str(lumi)+'*weightSyswLum_genWeight'+str(i)+'*('+hist_props['cut']+')'
-                        h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+                        h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
                         logger.info(h)
                         h.Write()
 
@@ -273,7 +273,7 @@ def generate_data_hists(data_root_file, hist_yaml, output='out.root'):
             logger.warning(hname+' already in file')
         else:
             cut = '1.0*('+hist_props['cut']+')'
-            h   = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True)
+            h   = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
             logger.info(h)
             h.Write()
 
@@ -392,8 +392,8 @@ def total_systematic_histogram(root_file, hist_name=None,
         # the hists from weights
         for wud in _systematic_weights:
             u_ws, d_ws  = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
-            arr_up      = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
-            arr_down    = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
+            arr_up   = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
+            arr_down = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
             total_band +=(0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # Ztautau generator weights
         if 'Ztautau' in pname and do_gen_weights:
