@@ -7,91 +7,60 @@ import aidapy.meta as apm
 
 aidapydir = str(os.getenv('AIDAPYDIR'))
 yaml_file = aidapydir+'/data/production.yaml'
+with open(yaml_file) as f:
+    yaml_top = yaml.load(f)
 atndir='/data/dukhep09/b/users/ddavis/top/at/v2430/mc/user.ddavis.'
 
+def command(dsid='', tree_name='', out_file='', out_tree='', is_fast=False):
+    base   = 'runAIDALoop --loop-alg --no-ttrv-warning -a '+atndir
+    fof    = '.*_s*output.root'
+    if is_fast: fof = '.*_a*output.root'
+    pieces = [base+dsid+fof,'-n',tree_name,'-o','outs/'+out_file,'--override-outtree-name',out_tree]
+    return ' '.join(pieces)
+
+def unravel_dsids(arr):
+    dsids = []
+    for entry in arr:
+        if isinstance(entry,list):
+            for dsid in range(entry[0],entry[1]+1):
+                dsids.append(dsid)
+        else:
+            dsids.append(entry)
+    return dsids
+
+def chunks(l, n):
+    n = max(1, n)
+    return (l[i:i+n] for i in xrange(0, len(l), n))
+
 def runAIDALoop(tree_name, dry=False):
-    command  = 'runAIDALoop --loop-alg --no-ttrv-warning'
-    command += ' -n ' + tree_name
-    command += ' -a ' + atndir
-    with open(yaml_file) as f:
-        yaml_top = yaml.load(f)
-
     commands_to_run = []
-    for process, full_fast_dict in yaml_top.items():
-        full_dict = full_fast_dict['FULL']
-        if 'FAST' in full_fast_dict:
-            fast_dict = full_fast_dict['FAST']
+    for process in yaml_top:
+        full_dict = yaml_top[process]['FULL']
+        if 'FAST' in yaml_top[process] and tree_name == 'nominal':
+            fast_dict = yaml_top[process]['FAST']
         else:
-            fast_dict = None
-
-        if tree_name == 'nominal':
-            for key, sampdict in full_dict.items():
-                outtree = sampdict['TreeName']
-                treecom = '--override-outtree-name '+outtree
-                for entry in sampdict['DSIDs']:
-                    if isinstance(entry,list):
-                        for dsid in range(entry[0],entry[1]+1):
-                            out = process+'.'+key+'_'+str(dsid)+'.root'
-                            if process == 'ttbar':
-                                out = 'ttbar_all.root'
-                            out = '-o '+out
-                            c = command+str(dsid)+'.*_s*output.root '+out+' '+treecom
-                            commands_to_run.append(c)
-                    else:
-                        dsid = entry
-                        out = process+'.'+key+'_'+str(dsid)+'.root'
-                        if process == 'ttbar':
-                            out = 'ttbar_all.root'
-                        out = '-o '+out
-                        c = command+str(dsid)+'.*_s*output.root '+out+' '+treecom
-                        commands_to_run.append(c)
-
-        else:
-            for key, sampdict in full_dict.items():
-                if key == 'main':
-                    for entry in sampdict['DSIDs']:
-                        if isinstance(entry,list):
-                            for dsid in range(entry[0],entry[1]+1):
-                                out = process+'.'+key+'_'+str(dsid)+'.root'
-                                if process == 'ttbar':
-                                    out = 'ttbar_all.root'
-                                out = '-o '+out
-                                c = command+str(dsid)+'*_s*output.root '+out
-                                commands_to_run.append(c)
-                        else:
-                            dsid = entry
-                            out = process+'.'+key+'_'+str(dsid)+'.root'
-                            if process == 'ttbar':
-                                out = 'ttbar_all.root'
-                            out = '-o '+out
-                            c = command+str(dsid)+'*_s*output.root '+out
-                            commands_to_run.append(c)
-
-        if fast_dict is not None and tree_name == 'nominal':
-            for key, sampdict in fast_dict.items():
-                outtree = sampdict['TreeName']
-                treecom = '--override-outtree-name '+outtree
-                for entry in sampdict['DSIDs']:
-                    if isinstance(entry,list):
-                        for dsdid in range(entry[0],entry[1]+1):
-                            out = process+'.'+key+'_'+str(dsid)+'.root'
-                            if process == 'ttbar':
-                                out = 'ttbar_all.root'
-                            c = command+str(dsid)+'.*_a*output.root '+out+' '+treecom
-                            commands_to_run.append(c)
-                    else:
-                        dsid = entry
-                        out = process+'.'+key+'_'+str(dsid)+'.root'
-                        if process == 'ttbar':
-                            out = 'ttbar_all.root'
-                        out = '-o '+out
-                        c = command+str(dsid)+'.*_a*output.root '+out+' '+treecom
-                        commands_to_run.append(c)
-
-    def chunks(l, n):
-        n = max(1, n)
-        return (l[i:i+n] for i in xrange(0, len(l), n))
-    newchunks = chunks(commands_to_run,4)
+            fast_dict = {}
+        for sample_type, samples in full_dict.items():
+            if tree_name == 'nominal':
+                outtreename = samples['OutTreeName']
+            else:
+                outtreename = tree_name
+            dsids = unravel_dsids(samples['DSIDs'])
+            for dsid in dsids:
+                commands_to_run.append(command(str(dsid),
+                                               tree_name,
+                                               process+'_'+str(dsid)+'.root',
+                                               outtreename,
+                                               False))
+        for sample_type, samples in fast_dict.items():
+            dsids = unravel_dsids(samples['DSIDs'])
+            for dsid in dsids:
+                commands_to_run.append(command(str(dsid),
+                                               tree_name,
+                                               process+'_'+str(dsid)+'.root',
+                                               samples['OutTreeName'],
+                                               True))
+    newchunks = chunks(commands_to_run,8)
     for c in list(newchunks):
         print("###")
         for cc in c:
@@ -102,4 +71,5 @@ def runAIDALoop(tree_name, dry=False):
         for p in processes: p.wait()
 
 for sys in apm._systematic_trees:
-    runAIDALoop(sys, dry=True)
+    runAIDALoop(sys,dry=False)
+runAIDALoop('nominal',dry=False)

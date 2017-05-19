@@ -1,70 +1,70 @@
 ttbar:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - 410501
   FAST:
     main:
-      TreeName: "nominal_fast"
+      OutTreeName: "nominal_fast"
       DSIDs:
         - 410501
     sysHS:
-      TreeName: "HS_fast"
+      OutTreeName: "HS_fast"
       DSIDs:
         - 410225
     sysFH:
-      TreeName: "FH_fast"
+      OutTreeName: "FH_fast"
       DSIDs:
         - 410525
     sysARup:
-      TreeName: "ARup_fast"
+      OutTreeName: "ARup_fast"
       DSIDs:
         - 410511
     sysARdown:
-      TreeName: "ARdown_fast"
+      OutTreeName: "ARdown_fast"
       DSIDs:
         - 410512
 
 Wt:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - 410015
         - 410016
     sysDS:
-      TreeName: "DS_full"
+      OutTreeName: "DS_full"
       DSIDs:
         - 410064
         - 410065
   FAST:
     main:
-      TreeName: "nominal_fast"
+      OutTreeName: "nominal_fast"
       DSIDs:
         - 410015
         - 410016
     sysHS1:
-      TreeName: "HS1_fast"
+      OutTreeName: "HS1_fast"
       DSIDs:
         - 410145
         - 410146
     sysHS2:
-      TreeName: "HS2_fast"
+      OutTreeName: "HS2_fast"
       DSIDs:
         - 410164
     sysFH:
-      TreeName: "FH_fast"
+      OutTreeName: "FH_fast"
       DSIDs:
         - 410145
         - 410146
     sysARup:
-      TreeName: "ARup_fast"
+      OutTreeName: "ARup_fast"
       DSIDs:
         - 410103
         - 410105
     sysARdown:
-      TreeName: "ARdown_fast"
+      OutTreeName: "ARdown_fast"
       DSIDs:
         - 410104
         - 410106
@@ -72,14 +72,14 @@ Wt:
 Ztautau:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - [364128, 364141]
 
 WW:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - 361600
         - 361606
@@ -87,7 +87,7 @@ WW:
 Zll:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - [364100, 364113] # Zee
         - [364114, 364127] # Zmumu
@@ -95,7 +95,7 @@ Zll:
 Diboson:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - 361601
         - 361603
@@ -104,14 +104,14 @@ Diboson:
 Wjets:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - [364156, 364197]
 
 RareSM:
   FULL:
     main:
-      TreeName: "nominal"
+      OutTreeName: "nominal"
       DSIDs:
         - [410066, 410070] # ttV
         - [410073, 410075] # ttV
