@@ -23,7 +23,17 @@ from aidapy.meta import _systematic_weights
 from aidapy.meta import _systematic_singles
 from aidapy.meta import _systematic_ud_prefixes
 
-def _root_file_dict(yaml_file):
+def _unravel_dsids(arr):
+    dsids = []
+    for entry in arr:
+        if isinstance(entry,list):
+            for dsid in range(entry[0],entry[1]+1):
+                dsids.append(dsid)
+        else:
+            dsids.append(entry)
+    return dsids
+
+def _root_file_dict_old(yaml_file):
     """
     Build a dictionary of ROOT files using a YAML config.
     The Fakes_FULL_main entry will be filled with the
@@ -52,9 +62,229 @@ def _root_file_dict(yaml_file):
                                 file_dict['Fakes_FULL_main'].append(str(entry)+'_'+simtype+'.root')
     return file_dict
 
-def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal', lumi=36.1,
+def _root_file_dict(yaml_file):
+    """
+    Build based on new production YAML file
+    """
+    with open(yaml_file) as f:
+        files_from_yaml = yaml.load(f)
+    file_dict = {}
+    file_dict['Fakes_FULL_main'] = ['nominal',[]]
+    for process, vals1 in files_from_yaml.items():
+        for simtype, vals2 in vals1.items():
+            for samptype, vals3 in vals2.items():
+                aidaTreeName = vals3['OutTreeName']
+                DSIDs = _unravel_dsids(vals3['DSIDs'])
+                procsimsamp = '_'.join([process,simtype,samptype])
+                file_dict[procsimsamp] = [aidaTreeName,[]]
+                files = ['_'.join([process,str(dsid)])+'.root' for dsid in DSIDs]
+                if 'FULL_main' in procsimsamp:
+                    file_dict['Fakes_FULL_main'][1] += files
+                file_dict[procsimsamp][1] += files
+    return file_dict
+
+def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal', lumi=36.1,
                       ignore=['Zll_FULL_main','Wjets_FULL_main'], output='out.root', Z_genWeights=False,
                       provide_file_dict=None, do_fast2full=True):
+    """
+    Create MC histograms from two YAML config files.
+
+    Parameters
+    ----------
+    mc_prod_yaml_file: str
+      Path to YAML file which organizes MC files
+    hist_yaml: str
+      Path to YAML file which defines the desired histograms
+    mc_prefix: str
+      The path to where MC files exist
+    aida_tree: str
+      Which AIDA tree to use to build the histograms
+    lumi: float
+      What luminosity to scale to
+    ignore: list
+      Different process prefixes (defined in the MC YAML file) to ignore
+    output: str
+      Path and name of output ROOT file
+    Z_genWeights: bool
+      Build histograms using the generator weights available in Ztautau
+    do_fast2full: bool
+      Do Fast to Full histograms (try scale fast sim hists to appropriate "full" hists).
+      Only for nominal trees.
+    """
+    # provide file dict to not rebuild if it exists somewhere.
+    if provide_file_dict is not None:
+        file_dict = provide_file_dict
+    else:
+        file_dict = _root_file_dict(mc_prod_yaml_file)
+
+    chains = {}
+    for fde, fdk in file_dict.items():
+        ckey, tname = fde, fdk[0]
+        if 'fast' in tname and aida_tree != 'nominal':
+            continue
+        if 'Fakes' in fde:
+            chains[ckey] = ROOT.TChain('AIDAfk_'+aida_tree)
+            [chains[ckey].Add(mc_prefix+'/'+f) for f in fdk[1]]
+        else:
+            if aida_tree == 'nominal':
+                chains[ckey] = ROOT.TChain('AIDA_'+tname)
+            else:
+                chains[ckey] = ROOT.TChain('AIDA_'+aida_tree)
+            [chains[ckey].Add(mc_prefix+'/'+f) for f in fdk[1]]
+    for ig in ignore:
+        if ig in chains:
+            del chains[ig]
+
+    with open(hist_yaml) as hf:
+        hist_dict = yaml.load(hf)
+
+    output_file = ROOT.TFile(output,'UPDATE')
+    rootkeys    = [str(o.GetName()) for o in output_file.GetListOfKeys()]
+    for pname, chain in chains.items():
+        if 'main' not in pname and aida_tree != 'nominal':
+            continue
+        for hist_name, hist_props in hist_dict.items():
+            hname  = pname+'_'+aida_tree+'_'+hist_name
+            if hname in rootkeys:
+                logger.warning(hname+' already in file')
+            else:
+                cut = str(lumi)+'*nomWeightwLum*('+hist_props['cut']+')'
+                h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
+                logger.info(h)
+                h.Write()
+            if aida_tree == 'nominal' and 'FAST' not in pname:
+                for systW in _systematic_weights:
+                    for ud in systW:
+                        hname = pname+'_'+aida_tree+'_'+hist_name+'_'+ud
+                        if hname in rootkeys:
+                            logger.warning(hname+' already in file')
+                        else:
+                            cut = str(lumi)+'*'+ud+'*('+hist_props['cut']+')'
+                            h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
+                            logger.info(h)
+                            h.Write()
+            if aida_tree == 'nominal' and 'Ztautau' in pname and Z_genWeights:
+                for i in range(1,115):
+                    hname = pname+'_'+aida_tree+'_'+hist_name+'_genWeight'+str(i)
+                    if hname in rootkeys:
+                        logger.warning(hname+' already in file')
+                    else:
+                        cut = str(lumi)+'*weightSyswLum_genWeight'+str(i)+'*('+hist_props['cut']+')'
+                        h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
+                        logger.info(h)
+                        h.Write()
+    output_file.Close()
+
+    ## Reopen the output file and lets try to make some systematic
+    ## histograms from the fastsim samples.  This is hard coded naming
+    ## based on YAML naming defined in the template.
+    if aida_tree == 'nominal' and do_fast2full:
+
+        def check_and_write(h, keys):
+            """
+            Check if a histogram name is in a list of keys from a file,
+            if so shoot a warning, if not, shoot info and write the hist.
+            """
+            if str(h.GetName()) in keys:
+                logger.warning(str(h.GetName()+' already in file'))
+            else:
+                logger.info(h)
+                h.Write()
+
+        output_file = ROOT.TFile(output,'UPDATE')
+        listofkeys  = [str(o.GetName()) for o in output_file.GetListOfKeys()]
+
+        for hist_name in hist_dict:
+            hn = hist_name
+
+            ########################################################
+            #### First ttbar #######################################
+            ########################################################
+            pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hn),
+                                           return_edges=True, return_err=True)
+            edges = edges[0]
+            bins = (pnom.size,edges[0],edges[-1])
+            fast_nom, fast_nom_e = hist2array(output_file.Get('ttbar_FAST_main_nominal_'+hn),
+                                              return_err=True)
+
+            ## additonal radiation
+            if 'ttbar_FAST_sysARup_nominal_'+hn in listofkeys \
+               and 'ttbar_FAST_sysARdown_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'ttbar_FAST_sysARup_nominal_'+hn,
+                              'ttbar_FULL_sysARup_nominal_'+hn,fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'ttbar_FAST_sysARdown_nominal_'+hn,
+                              'ttbar_FULL_sysARdown_nominal_'+hn,fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find ttbar additional radiation FAST hists')
+
+            ## factorization/hadronization
+            if 'ttbar_FAST_sysFH_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'ttbar_FAST_sysFH_nominal_'+hn,'ttbar_FULL_sysFH_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find ttbar factorization/hadronization FAST hists')
+
+            ## hard scattering
+            if 'ttbar_FAST_sysHS_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'ttbar_FAST_sysHS_nominal_'+hn,'ttbar_FULL_sysHS_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find ttbar hard scattering FAST hists')
+            ########################################################
+            ########################################################
+
+            ########################################################
+            #### Now Wt ############################################
+            ########################################################
+            pnom,perr = hist2array(output_file.Get('Wt_FULL_main_nominal_'+hn),return_err=True)
+            fast_nom,fast_nom_e = hist2array(output_file.Get('Wt_FAST_main_nominal_'+hn),
+                                              return_err=True)
+
+            ## additional radiation
+            if 'Wt_FAST_sysARup_nominal_'+hn in listofkeys \
+               and 'Wt_FAST_sysARdown_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'Wt_FAST_sysARup_nominal_'+hn,'Wt_FULL_sysARup_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'Wt_FAST_sysARdown_nominal_'+hn,'Wt_FULL_sysARdown_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find Wt addiational radiation FAST histograms')
+
+            ## factorization/hadrontization
+            if 'Wt_FAST_sysFH_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'Wt_FAST_sysFH_nominal_'+hn,'Wt_FULL_sysFH_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find Wt factorization/hadronization FAST hists')
+
+            ## hard scattering
+            if 'Wt_FAST_sysHS1_nominal_'+hn in listofkeys \
+               and 'Wt_FAST_sysHS2_nominal_'+hn in listofkeys:
+                h = fast2full(output_file,'Wt_FAST_sysHS1_nominal_'+hn,'Wt_FULL_sysHS1_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+                h = fast2full(output_file,'Wt_FAST_sysHS2_nominal_'+hn,'Wt_FULL_sysHS2_nominal_'+hn,
+                              fast_nom,pnom,fast_nom_e,perr,bins)
+                check_and_write(h,listofkeys)
+            else:
+                logger.warning('Cannot find Wt hard scattering FAST hists')
+            ########################################################
+            ########################################################
+
+        ### Finally close up the output file.
+        output_file.Close()
+
+
+def generate_mc_hists_old(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal', lumi=36.1,
+                          ignore=['Zll_FULL_main','Wjets_FULL_main'], output='out.root', Z_genWeights=False,
+                          provide_file_dict=None, do_fast2full=True):
     """
     Create MC histograms from two YAML config files.
 
@@ -84,7 +314,7 @@ def generate_mc_hists(mc_yaml_file, hist_yaml, mc_prefix='', aida_tree='nominal'
     if provide_file_dict is not None:
         file_dict = provide_file_dict
     else:
-        file_dict = _root_file_dict(mc_yaml_file)
+        file_dict = _root_file_dict_old(mc_yaml_file)
 
     chains = { fd : ROOT.TChain('AIDA_'+aida_tree) for fd in file_dict if fd != 'Fakes_FULL_main' }
     # fakes have their own tree name.
