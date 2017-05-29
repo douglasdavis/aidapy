@@ -1,9 +1,10 @@
 from __future__ import print_function
 
 import yaml
-from subprocess import Popen
+import subprocess
 import os
 import aidapy.meta as apm
+import sys
 
 aidapydir = str(os.getenv('AIDAPYDIR'))
 yaml_file = aidapydir+'/data/production.yaml'
@@ -15,7 +16,7 @@ def command(dsid='', tree_name='', out_file='', out_tree='', is_fast=False):
     base   = 'runAIDALoop --loop-alg --no-ttrv-warning -a '+atndir
     fof    = '.*_s*output.root'
     if is_fast: fof = '.*_a*output.root'
-    pieces = [base+dsid+fof,'-n',tree_name,'-o','outs/'+out_file,'--override-outtree-name',out_tree]
+    pieces = [base+dsid+fof,'-n',tree_name,'-o','outs2/'+out_file,'--override-outtree-name',out_tree]
     return ' '.join(pieces)
 
 def unravel_dsids(arr):
@@ -60,16 +61,29 @@ def runAIDALoop(tree_name, dry=False):
                                                process+'_'+str(dsid)+'.root',
                                                samples['OutTreeName'],
                                                True))
-    newchunks = chunks(commands_to_run,8)
-    for c in list(newchunks):
-        print("###")
-        for cc in c:
-            print(cc)
-        if dry: hashbang = '#'
-        else: hashbang = ''
-        processes = [Popen(hashbang+cc, shell=True) for cc in c]
-        for p in processes: p.wait()
+    #newchunks = chunks(commands_to_run,8)
+    #for c in list(newchunks):
+    #    print("###")
+    #    for cc in c:
+    #        print(cc)
+    #    if dry: hashbang = '#'
+    #    else: hashbang = ''
+    #    processes = [subprocess.Popen(hashbang+cc, shell=True) for cc in c]
+    #    for p in processes: p.wait()
+    for com in commands_to_run:
+        if dry:
+            com = '#'+com
+        else:
+            pass
+        #print(com)
+        subprocess.call('echo "'+com+'"',shell=True)
+        subprocess.call(com,shell=True)
 
-for sys in apm._systematic_trees:
-    runAIDALoop(sys,dry=False)
-runAIDALoop('nominal',dry=False)
+def main(args):
+    runAIDALoop('nominal',dry=('dry' in args))
+    if 'systematics' in args:
+        for sys in apm._systematic_trees:
+            runAIDALoop(sys,dry=('dry' in args))
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
