@@ -34,7 +34,6 @@ if args.gen_hists:
 
 if args.gen_plots:
     if len(args.gen_plots) == 1 and '.yaml' in args.gen_plots[0]:
-        print("OPENING YAML")
         with open(args.gen_plots[0]) as f:
             yaml_top = yaml.load(f)
         for h in yaml_top:

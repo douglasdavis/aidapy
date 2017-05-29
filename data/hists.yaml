@@ -17,12 +17,17 @@ met_0j:
 #  var: 'met'
 #  cut: '!SS&&elmu&&njets==1&&nbjets==0'
 #  bins: [20,0,200]
-#  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{b-\mathrm{jets}}=0)$','Events']
-#met_1j1b:
-#  var: 'met'
-#  cut: '!SS&&elmu&&njets==1&&nbjets==1'
-#  bins: [20,0,200]
-#  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{b-\mathrm{jets}}=1)$','Events']
+#  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{\mathrm{bjets}}=0)$','Events']
+met_1j1b:
+  var: 'met'
+  cut: '!SS&&elmu&&njets==1&&nbjets==1'
+  bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 1, N_{\mathrm{bjets}}=1)$','Events']
+met_2j1b:
+  var: 'met'
+  cut: '!SS&&elmu&&njets==2&&nbjets==1'
+  bins: [20,0,200]
+  mpltitles: ['$E_\mathrm{T}^\mathrm{miss}$ [GeV] $(N_\mathrm{jets} = 2, N_{\mathrm{bjets}}=1)$','Events']
 met_1pj:
   var: 'met'
   cut: '!SS&&elmu&&njets>=1'
