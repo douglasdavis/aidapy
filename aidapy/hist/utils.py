@@ -168,7 +168,7 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False, negatives_to_z
         shift_overflow(hist)
     if negatives_to_zero:
         for idx in (np.where(hist2array(hist) < 0)[0]):
-            hist.SetBinContent(idx+1,0.0)
+            hist.SetBinContent(int(idx)+1,0.0)
     return hist
 
 def fast2full(root_file, faststr, fullstr, fast_nom, pnom, fast_nom_e, pnom_err, bins):

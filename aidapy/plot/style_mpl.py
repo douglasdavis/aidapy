@@ -4,7 +4,7 @@
 ATLAS-like style for matplotlib
 """
 
-def style_mpl():
+def atlas_mpl_style():
 
     STYLE = {}
 

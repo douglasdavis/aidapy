@@ -1,17 +1,18 @@
 from aidapy.hist import total_systematic_histogram
 from aidapy.hist import hist2array
+from .style_mpl import atlas_mpl_style
 
 import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
-from style_mpl import style_mpl
 import matplotlib as mpl
 import matplotlib.gridspec as gsc
 plt.style.use('classic')
 from pylab import setp
-for key, val in style_mpl().items():
+sty = atlas_mpl_style()
+for key, val in sty.items():
     mpl.rcParams[key] = val
 from matplotlib.font_manager import FontProperties
 fontBase  = FontProperties()
