@@ -1,12 +1,12 @@
 from __future__ import print_function
 import ROOT
-ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.SetBatch()
 import numpy as np
 from aidapy.hist import array2hist
 from aidapy.hist import hist2array
 from aidapy.hist import total_systematic_histogram
-import root_utils
-
+from .root_utils import styling
+styling()
 def canvas_with_ratio(name, xdim=450, ydim=475,
                       pad0=(0.0,0.28,0.95,0.95),
                       pad1=(0.0,0.00,0.95,0.27)):
@@ -75,7 +75,8 @@ def hplot_root(root_file, hist_name='met_1pj', xtitle='', ytitle='', logy=False,
                                                                    return_stat_error=True)
     ratio_a         = data_a/nom_h
     ratio_a_staterr = np.sqrt(1/(nom_h*nom_h)*data_a + np.power(data_a/(nom_h*nom_h)*staterr,2))
-    ratio_root_h    = array2hist(ratio_a, errors=ratio_a_staterr)
+    ratio_root_h    = array2hist(ratio_a, errors=ratio_a_staterr,
+                                 binning=(ratio_a.shape[0],edges[0],edges[-1]))
     sysh = array2hist(nom_h, 'totalSys_'+hist_name, (nom_h.size,edges[0],edges[-1]), errors=total_band)
     ratiosysh = array2hist(np.array(np.ones(nom_h.size)), 'totalSysRatio_'+hist_name,
                            (nom_h.size,edges[0],edges[-1]), errors=total_band/nom_h)

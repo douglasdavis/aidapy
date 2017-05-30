@@ -43,14 +43,18 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     nom_h, total_band, edges, staterr = total_systematic_histogram(root_file,hist_name,proc_names,
                                                                    return_stat_error=True)
     centers  = np.delete(edges,[0])-(np.ediff1d(edges)/2.0)
+
     to_stack = [nominals[name][0] for name in ['RareSM','Diboson','Fakes','WW','Wt','Ztautau','ttbar']]
     cols     = ['darkred','black','gray','green','blue','orange','white']
+    labels   = [r'Rare SM',r'Diboson',r'Fake/NP (MC)',r'WW',r'Wt',r'$Z\rightarrow\tau\tau$',r'$t\bar{t}$']
+    #to_stack = [nominals[name][0] for name in ['RareSM','Diboson','Fakes','WW','Ztautau','ttbar','Wt']]
+    #cols     = ['darkred','black','gray','green','orange','white','blue']
+    #labels   = [r'Rare SM',r'Diboson',r'Fake/NP (MC)',r'WW',r'$Z\rightarrow\tau\tau$',r'$t\bar{t}$',r'Wt']
+
     fig,ax,axerr = canvas_with_ratio()
     ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko',label=r'Data')
     ax.hist([centers for _ in to_stack],weights=to_stack,bins=edges,stacked=True,
-            color=cols,histtype='stepfilled',
-            label=[r'Rare SM',r'Diboson',r'Fake/NP (MC)',
-                   r'WW',r'Wt',r'$Z\rightarrow\tau\tau$',r'$t\bar{t}$'])
+            color=cols,histtype='stepfilled',label=labels)
     syspatches = []
     syspatches = [patches.Rectangle((c-w/2,v-err),w,err*2,hatch='\\\\\\\\',fill=False,edgecolor='none')
                   for c, v, err, w in zip(centers,nom_h,total_band,np.ediff1d(edges))]

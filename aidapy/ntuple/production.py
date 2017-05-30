@@ -1,3 +1,9 @@
+"""
+This file has quite a bit of hard coding in it and is not meant to
+seriously be part of the aidapy API. It has functions to help process
+the ntuples created by AnalysisTop.
+"""
+
 from __future__ import print_function
 
 import yaml
@@ -34,6 +40,9 @@ def chunks(l, n):
     return (l[i:i+n] for i in xrange(0, len(l), n))
 
 def runAIDALoop(tree_name, dry=False):
+    """
+    A wrapper around the C++ runAIDALoop executable
+    """
     commands_to_run = []
     for process in yaml_top:
         full_dict = yaml_top[process]['FULL']

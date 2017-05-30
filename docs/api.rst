@@ -40,4 +40,4 @@ Ntuple production module (aidapy.ntuple)
 
 .. module:: aidapy.ntuple
 
-.. autofunction:: runAIDALoop_on_tree
+.. autofunction:: runAIDALoop
