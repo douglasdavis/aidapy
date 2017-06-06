@@ -238,7 +238,6 @@ _systematic_ud_prefixes = [ 'EG_RESOLUTION_ALL',
                             'MUON_SAGITTA_RESBIAS',
                             'MUON_SAGITTA_RHO',
                             'MUON_SCALE',
-                            'MET_SoftTrk_Scale',
                             'MET_SoftTrk_Scale'
 ]
 
