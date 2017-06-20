@@ -1,4 +1,4 @@
 mc_config:   '/Users/ddavis/Software/aidapy/data/production.yaml'
 mc_prefix:   '/Users/ddavis/Software/LocalData/outs'
 hist_config: '/Users/ddavis/Software/aidapy/data/hists.yaml'
-data_file:   '/Users/ddavis/Software/LocalData/v2430/data.root'
+data_file:   '/Users/ddavis/Software/LocalData/outs/data/data.root'
