@@ -1,6 +1,9 @@
+import os
+import shutil
+
 from aidapy.hist import total_systematic_histogram
 from aidapy.hist import hist2array
-from .style_mpl import atlas_mpl_style
+#from .style_mpl import atlas_mpl_style
 
 import numpy as np
 
@@ -9,14 +12,15 @@ import matplotlib.patches as patches
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 import matplotlib as mpl
 import matplotlib.gridspec as gsc
-plt.style.use('classic')
+#plt.style.use('classic')
 from pylab import setp
-sty = atlas_mpl_style()
-for key, val in sty.items():
-    mpl.rcParams[key] = val
+#sty = atlas_mpl_style()
+#for key, val in sty.items():
+#    mpl.rcParams[key] = val
 from matplotlib.font_manager import FontProperties
 fontBase  = FontProperties()
 fontATLAS = fontBase.copy()
+fontATLAS.set_size(16)
 fontATLAS.set_style('italic')
 fontATLAS.set_weight('bold')
 
@@ -35,8 +39,12 @@ def canvas_with_ratio(figsize=(8,7),height_ratios=[3.65,1],
     ax1.set_xlabel(xtitle)
     return fig, ax0, ax1
 
-def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
+def hplot_mpl(root_file, hist_name='met_1pj', outdir='outs', xtitle='', ytitle='',logy=False,
               proc_names=['Wt','ttbar','Fakes','WW','Diboson','Ztautau','RareSM']):
+    if os.path.exists(outdir):
+        pass
+    else:
+        os.makedirs(outdir)
     nominals = { pname : root_file.Get(pname+'_FULL_main_nominal_'+hist_name) for pname in proc_names }
     nominals = { pname : hist2array(h,return_edges=True) for pname, h in nominals.items() }
     data     = root_file.Get('Data_'+hist_name)
@@ -55,7 +63,7 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     fig,ax,axerr = canvas_with_ratio()
     ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko',label=r'Data')
     ax.hist([centers for _ in to_stack],weights=to_stack,bins=edges,stacked=True,
-            color=cols,histtype='stepfilled',label=labels)
+            color=cols,histtype='stepfilled',label=labels, ls='solid', lw=1, edgecolor='black')
     syspatches = []
     syspatches = [patches.Rectangle((c-w/2,v-err),w,err*2,hatch='\\\\\\\\',fill=False,edgecolor='none')
                   for c, v, err, w in zip(centers,nom_h,total_band,np.ediff1d(edges))]
@@ -64,13 +72,17 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
                                    label=r'Systematics')
     ax.add_patch(trashpatch)
     ax.errorbar(centers,data,yerr=np.sqrt(data),fmt='ko')
-    ax.legend(numpoints=1)
+    ax.legend(loc='upper right')
+    l_handles, l_labels = ax.get_legend_handles_labels()
+    l_handles = [l_handles[-1]] + l_handles[:-1]
+    l_labels  = [l_labels[-1]]  + l_labels[:-1]
+    ax.legend(l_handles,l_labels,loc='upper right',fontsize=12)
     ax.set_ylim([0,np.max(data)*1.3])
-    ax.text(.05,.92,'ATLAS',transform=ax.transAxes,style='oblique',size=16,fontproperties=fontATLAS)
-    ax.text(.175,.92,r'Internal, AIDA OS $e\mu$, pre-fit',transform=ax.transAxes,size=16)
-    ax.text(.05,.835,r'$\sqrt{s}$ = 13 TeV, $\int \mathcal{L}$dt = 36.1 fb$^{-1}$',
-            transform=ax.transAxes,size=16)
-    ax.text(.05,.75,'',transform=ax.transAxes,size=16)
+    ax.text(.05,.92,'ATLAS',transform=ax.transAxes,style='oblique',size=14,fontproperties=fontATLAS)
+    ax.text(.185,.92,r'Internal, AIDA OS $e\mu$, pre-fit',transform=ax.transAxes,size=14)
+    ax.text(.05,.845,r'$\sqrt{s}$ = 13 TeV, $\int \mathcal{L}$dt = 36.1 fb$^{-1}$',
+            transform=ax.transAxes,size=14)
+    ax.text(.05,.75,'',transform=ax.transAxes,size=14)
     domcErr = np.sqrt(1.0/(nom_h*nom_h)*data + data*data*staterr*staterr/(nom_h*nom_h*nom_h*nom_h))
     axerr.errorbar(centers,data/nom_h,yerr=domcErr,fmt='ko')#data/(nom_h*nom_h)*total_band
     errpatches = []
@@ -83,8 +95,14 @@ def hplot_mpl(root_file, hist_name='met_1pj', xtitle='', ytitle='',logy=False,
     log_axes = ['pT','_2bins','_3bins']
     if any(term in hist_name for term in log_axes):
         logy = True
-    axerr.set_xlabel(xtitle)
-    ax.set_ylabel(ytitle)
+    axerr.set_xlabel(xtitle,fontsize=14)
+    if 'njets' in hist_name:
+        axerr.xaxis.set_ticks(np.array([i for i in centers]))
+        newxticklabels = [str(int(i)) for i in centers]
+        newxticklabels[-1] = r'$\geq '+str(int(centers[-1]))+'$'
+        axerr.set_xticklabels(newxticklabels)
+    ax.set_ylabel(ytitle,fontsize=14)
     if logy: ax.set_yscale('log'), ax.set_ylim([np.min(data)*.01,np.max(data)*500])
-    fig.savefig(hist_name+'.pdf')
+    fig.savefig(outdir+'/'+hist_name+'.pdf')
+    fig.savefig(outdir+'/'+hist_name+'.png')
     #plt.show()

@@ -18,6 +18,8 @@ parser.add_argument('-r','--root-plots',dest='root_plots',action='store_true',de
                     help='Flag to plot with ROOT instead of matplotlib')
 parser.add_argument('-o','--out-file',type=str,dest='out_file',default='aida_histograms.root',
                     help='Name of output file')
+parser.add_argument('-s','--split-for-fit',dest='split_for_fit',nargs='+',type=str,
+                    help='Run the aidapy.fit.split4fit function with given histogram names')
 
 args = parser.parse_args()
 if len(sys.argv) < 2:
@@ -26,6 +28,7 @@ if len(sys.argv) < 2:
 
 import aidapy.hist as aph
 import aidapy.plot as app
+import aidapy.fit  as apf
 import yaml
 import ROOT
 
@@ -37,10 +40,14 @@ if args.gen_plots:
         with open(args.gen_plots[0]) as f:
             yaml_top = yaml.load(f)
         for h in yaml_top:
-            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h,xtitle=yaml_top[h]['mpltitles'][0],ytitle=yaml_top[h]['mpltitles'][1])
+            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h,
+                          xtitle=yaml_top[h]['mpltitles'][0],ytitle=yaml_top[h]['mpltitles'][1])
     else:
         for p in args.gen_plots:
             if args.root_plots:
                 app.hplot_root(ROOT.TFile('aida_histograms.root','read'),p)
             else:
                 app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
+
+if args.split_for_fit:
+    apf.split4fit('aida_histograms.root',args.split_for_fit)
