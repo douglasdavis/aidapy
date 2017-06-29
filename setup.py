@@ -15,6 +15,7 @@ setup(name='aidapy',
                 'aidapy.hist',
                 'aidapy.meta',
                 'aidapy.plot',
-                'aidapy.ntuple'
+                'aidapy.ntuple',
+                'aidapy.fit'
       ]
 )
