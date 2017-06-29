@@ -41,3 +41,10 @@ Ntuple production module (aidapy.ntuple)
 .. module:: aidapy.ntuple
 
 .. autofunction:: runAIDALoop
+
+Fitting module (aidapy.fit)
+---------------------------
+
+.. module:: aidapy.fit
+
+.. autofunction:: split4fit
