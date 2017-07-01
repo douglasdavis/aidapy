@@ -12,6 +12,8 @@ parser.add_argument('-g','--generate-histograms',action='store_true',dest='gen_h
 parser.add_argument('-y','--yaml-config',dest='yaml_config',type=str,
                     default=AIDAPYDIR+'/data/template.yaml',
                     help='Path to YAML config')
+parser.add_argument('-i','--in-file',dest='in_file',type=str,
+                    help='Input ROOT file for the -p and -s options')
 parser.add_argument('-p','--generate-plots',dest='gen_plots',nargs='+',type=str,
                     help='Make plots (HARD CODED UNDER CONSTRUCTION)')
 parser.add_argument('-r','--root-plots',dest='root_plots',action='store_true',default=False,
@@ -40,14 +42,17 @@ if args.gen_plots:
         with open(args.gen_plots[0]) as f:
             yaml_top = yaml.load(f)
         for h in yaml_top:
-            app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),h,
+            app.hplot_mpl(ROOT.TFile(args.in_file,'read'),h,
                           xtitle=yaml_top[h]['mpltitles'][0],ytitle=yaml_top[h]['mpltitles'][1])
     else:
         for p in args.gen_plots:
             if args.root_plots:
-                app.hplot_root(ROOT.TFile('aida_histograms.root','read'),p)
+                app.hplot_root(ROOT.TFile(args.in_file,'read'),p)
             else:
-                app.hplot_mpl(ROOT.TFile('aida_histograms.root','read'),p)
+                app.hplot_mpl(ROOT.TFile(args.in_file,'read'),p)
 
 if args.split_for_fit:
+    if not args.in_file:
+        print('Requires input file!')
+        exit()
     apf.split4fit('aida_histograms.root',args.split_for_fit)
