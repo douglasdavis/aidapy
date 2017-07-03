@@ -171,6 +171,8 @@ def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nom
             ########################################################
             #### First ttbar #######################################
             ########################################################
+            if 'ttbar_FULL_main_nominal_'+hn not in listofkeys:
+                continue
             pnom, edges, perr = hist2array(output_file.Get('ttbar_FULL_main_nominal_'+hn),
                                            return_edges=True, return_err=True)
             edges = edges[0]
@@ -211,6 +213,8 @@ def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nom
             ########################################################
             #### Now Wt ############################################
             ########################################################
+            if 'Wt_FULL_main_nominal_'+hn not in listofkeys:
+                continue
             pnom,perr = hist2array(output_file.Get('Wt_FULL_main_nominal_'+hn),return_err=True)
             fast_nom,fast_nom_e = hist2array(output_file.Get('Wt_FAST_main_nominal_'+hn),
                                               return_err=True)
