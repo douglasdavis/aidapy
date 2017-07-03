@@ -125,7 +125,7 @@ def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nom
                 h.Write()
             if aida_tree == 'nominal' and 'FAST' not in pname:
                 for systW in _systematic_weights:
-                    for ud in systW:
+                    for ud in systW[:-1]:
                         hname = pname+'_'+aida_tree+'_'+hist_name+'_'+ud
                         if hname in rootkeys:
                             logger.warning(hname+' already in file')
@@ -374,10 +374,10 @@ def total_systematic_histogram(root_file, hist_name=None,
         pnom = nominals[pname][0]
         # the two sided systematics in trees
         for ud in _systematic_ud_prefixes:
-            if 'MET_Soft' in ud: updown = ['Up','Down'] # why does MET use different name... lame
+            if 'MET_Soft' in ud[0]: updown = ['Up','Down'] # why does MET use different name... lame
             else:                updown = ['__1up','__1down']
-            hname_up   = pname+'_FULL_main_'+ud+updown[0]+'_'+hist_name
-            hname_down = pname+'_FULL_main_'+ud+updown[1]+'_'+hist_name
+            hname_up   = pname+'_FULL_main_'+ud[0]+updown[0]+'_'+hist_name
+            hname_down = pname+'_FULL_main_'+ud[0]+updown[1]+'_'+hist_name
             if hname_up not in listofkeys:
                 logger.warning(hname_up+' systematic not available for process '+pname+'!')
                 continue
@@ -389,7 +389,7 @@ def total_systematic_histogram(root_file, hist_name=None,
             total_band += (0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # the one sided systematics in trees, symmetrize it
         for osed in _systematic_singles:
-            hname = pname+'_FULL_main_'+osed+'_'+hist_name
+            hname = pname+'_FULL_main_'+osed[0]+'_'+hist_name
             if hname not in listofkeys:
                 logger.warning(hname+' systematic not available!')
                 continue

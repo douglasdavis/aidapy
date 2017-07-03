@@ -25,12 +25,14 @@ print('  MCstatThreshold: 0.01', file=f)
 print('  ImageFormat: "pdf"', file=f)
 print('  SystControlPlots: TRUE', file=f)
 print('  DebugLevel: 1', file=f)
+print('  SystPruningShape: .001', file=f)
+print('  SystPruningNorm: .001', file=f)
 print('', file=f)
 
 print('Fit: "fit"', file=f)
 print('  FitType: SPLUSB', file=f)
 print('  FitRegion: CRSR', file=f)
-#print('  FitBlind: TRUE', file=f)
+print('  FitBlind: TRUE', file=f)
 print('  NumCPU: 2', file=f)
 print('', file=f)
 
@@ -41,8 +43,16 @@ print('  VariableTitle: "#it{E}_{T}^{miss} [GeV]"', file=f)
 print('  ShortLabel: "#geq 1 jet"', file=f)
 print('  Label: "#geq 1 jet"', file=f)
 print('  TexLabel: "$N_{\mathrm{jets}} \geq 1$"', file=f)
-#print('  DataType: ASIMOV', file=f)
 print('', file=f)
+
+#print('Region: "met_1j1b"', file=f)
+#print('  Type: SIGNAL', file=f)
+#print('  HistoFile: "aida_histograms_met_1j1b"', file=f)
+#print('  VariableTitle: "#it{E}_{T}^{miss} [GeV]"', file=f)
+#print('  ShortLabel: "1j1b"', file=f)
+#print('  Label: "1 jet, 1 bjet"', file=f)
+#print('  TexLabel: "$N_{\mathrm{jets}} = 1; $N_{\mathrm{bjets}} = 1$"', file=f)
+#print('', file=f)
 
 print('Region: "met_0j"', file=f)
 print('  Type: SIGNAL', file=f)
@@ -51,7 +61,6 @@ print('  VariableTitle: "#it{E}_{T}^{miss} [GeV]"', file=f)
 print('  ShortLabel: "No jets"', file=f)
 print('  Label: "No jets"', file=f)
 print('  TexLabel: "$N_{\mathrm{jets}} = 0$"', file=f)
-#print('  DataType: ASIMOV', file=f)
 print('', file=f)
 
 print('Sample: "Data"', file=f)
@@ -253,36 +262,36 @@ print('', file=f)
 for s in aidapy.meta._systematic_ud_prefixes:
     up = '__1up"'
     down = '__1down"'
-    if 'MET_' in s:
+    if 'MET_' in s[0]:
         up = 'Up"'
         down = 'Down"'
-    print('Systematic: "'+s+'"', file=f)
-    print('  Title: "'+s+'"', file=f)
+    print('Systematic: "'+s[0]+'"', file=f)
+    print('  Title: "'+s[1]+'"', file=f)
     print('  Samples: ttbar,Wt,WW,Ztautau,Diboson,Fakes,RareSM', file=f)
     print('  Type: HISTO', file=f)
-    print('  HistoNameSufUp: "_'+s+up, file=f)
-    print('  HistoNameSufDown: "_'+s+down, file=f)
+    print('  HistoNameSufUp: "_'+s[0]+up, file=f)
+    print('  HistoNameSufDown: "_'+s[0]+down, file=f)
     print('  Regions: met_1pj,met_0j', file=f)
     print('  Symmetrisation: TWOSIDED', file=f)
     print('  Category: Instrumental', file=f)
     print('', file=f)
 
 for s in aidapy.meta._systematic_singles:
-    print('Systematic: "'+s+'"', file=f)
-    print('  Title: "'+s+'"', file=f)
+    print('Systematic: "'+s[0]+'"', file=f)
+    print('  Title: "'+s[1]+'"', file=f)
     print('  Samples: ttbar,Wt,WW,Ztautau,Diboson,Fakes,RareSM', file=f)
     print('  Regions: met_1pj,met_0j', file=f)
     print('  Type: HISTO', file=f)
-    print('  HistoNameSufUp: "_'+s+'"', file=f)
+    print('  HistoNameSufUp: "_'+s[0]+'"', file=f)
     print('  Symmetrisation: ONESIDED', file=f)
     print('  Category: Instrumental', file=f)
     print('', file=f)
 
 for s in aidapy.meta._systematic_weights:
-    up, down = s[0], s[1]
+    up, down, title = s[0], s[1], s[2]
     name = up.split('_UP')[0].split('weightSyswLum_')[-1]
     print('Systematic: "'+name+'"', file=f)
-    print('  Title: "'+name+'"', file=f)
+    print('  Title: "'+title+'"', file=f)
     print('  Samples: ttbar,Wt,WW,Ztautau,Diboson,Fakes,RareSM', file=f)
     print('  Regions: met_1pj,met_0j', file=f)
     print('  Type: HISTO', file=f)
