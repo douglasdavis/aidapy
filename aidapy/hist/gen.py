@@ -22,6 +22,7 @@ from aidapy.meta import _systematic_trees
 from aidapy.meta import _systematic_weights
 from aidapy.meta import _systematic_singles
 from aidapy.meta import _systematic_ud_prefixes
+from aidapy.meta import _systematic_btag_weights
 
 def _unravel_dsids(arr):
     dsids = []
@@ -123,7 +124,8 @@ def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nom
                 h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
                 logger.info(h)
                 h.Write()
-            if aida_tree == 'nominal' and 'FAST' not in pname:
+
+            if aida_tree == 'nominal' and 'FAST' not in pname and 'main' in hname:
                 for systW in _systematic_weights:
                     for ud in systW[:-1]:
                         hname = pname+'_'+aida_tree+'_'+hist_name+'_'+ud
@@ -134,6 +136,17 @@ def generate_mc_hists(mc_prod_yaml_file, hist_yaml, mc_prefix='', aida_tree='nom
                             h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
                             logger.info(h)
                             h.Write()
+                for bsystW in _systematic_btag_weights:
+                    for ud in bsystW[:-1]:
+                        hname = pname+'_'+aida_tree+'_'+hist_name+'_'+ud
+                        if hname in rootkeys:
+                            logger.warning(hname+' already in file')
+                        else:
+                            cut = str(lumi)+'*'+ud+'*('+hist_props['cut']+')'
+                            h = tree2hist(chain,hname,hist_props['bins'],hist_props['var'],cut,True,True)
+                            logger.info(h)
+                            h.Write()
+
             if aida_tree == 'nominal' and 'Ztautau' in pname and Z_genWeights:
                 for i in range(1,115):
                     hname = pname+'_'+aida_tree+'_'+hist_name+'_genWeight'+str(i)
@@ -399,11 +412,11 @@ def total_systematic_histogram(root_file, hist_name=None,
                 continue
             arr         = hist2array(root_file.Get(hname))
             total_band += (pnom-arr)*(pnom-arr)
-        # the hists from weights
-        for wud in _systematic_weights:
+        # the hists from weights (including b-tagging)
+        for wud in (_systematic_weights+_systematic_btag_weights):
             u_ws, d_ws  = wud[0].split('wLum_')[-1], wud[1].split('wLum_')[-1]
-            arr_up   = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
-            arr_down = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
+            arr_up      = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+u_ws))
+            arr_down    = hist2array(root_file.Get(pname+'_FULL_main_nominal_'+hist_name+'_weightSyswLum_'+d_ws))
             total_band +=(0.5*(arr_up-arr_down))*(0.5*(arr_up-arr_down))
         # Ztautau generator weights
         if 'Ztautau' in pname and do_gen_weights:

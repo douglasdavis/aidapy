@@ -247,3 +247,35 @@ _systematic_singles = [
     ['MET_SoftTrk_ResoPara',   'MET SoftTrk ResoPara'],
     ['MET_SoftTrk_ResoPerp',   'Met SoftTrk ResoPerp']
 ]
+
+_systematic_btag_weights = [
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_0",           "weightSyswLum_bTagSF_77_eigenvars_B_down_0",           "b-tag Eigenvars B 0"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_1",           "weightSyswLum_bTagSF_77_eigenvars_B_down_1",           "b-tag Eigenvars B 1"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_2",           "weightSyswLum_bTagSF_77_eigenvars_B_down_2",           "b-tag Eigenvars B 2"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_3",           "weightSyswLum_bTagSF_77_eigenvars_B_down_3",           "b-tag Eigenvars B 3"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_4",           "weightSyswLum_bTagSF_77_eigenvars_B_down_4",           "b-tag Eigenvars B 4"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_B_up_5",           "weightSyswLum_bTagSF_77_eigenvars_B_down_5",           "b-tag Eigenvars B 5"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_C_up_0",           "weightSyswLum_bTagSF_77_eigenvars_C_down_0",           "b-tag Eigenvars C 0"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_C_up_1",           "weightSyswLum_bTagSF_77_eigenvars_C_down_1",           "b-tag Eigenvars C 1"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_C_up_2",           "weightSyswLum_bTagSF_77_eigenvars_C_down_2",           "b-tag Eigenvars C 2"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_C_up_3",           "weightSyswLum_bTagSF_77_eigenvars_C_down_3",           "b-tag Eigenvars C 3"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_0",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_0",       "b-tag Eigenvars L 0"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_1",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_1",       "b-tag Eigenvars L 1"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_2",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_2",       "b-tag Eigenvars L 2"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_3",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_3",       "b-tag Eigenvars L 3"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_4",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_4",       "b-tag Eigenvars L 4"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_5",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_5",       "b-tag Eigenvars L 5"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_6",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_6",       "b-tag Eigenvars L 6"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_7",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_7",       "b-tag Eigenvars L 7"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_8",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_8",       "b-tag Eigenvars L 8"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_9",       "weightSyswLum_bTagSF_77_eigenvars_Light_down_9",       "b-tag Eigenvars L 9"     ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_10",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_10",      "b-tag Eigenvars L 10"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_11",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_11",      "b-tag Eigenvars L 11"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_12",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_12",      "b-tag Eigenvars L 12"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_13",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_13",      "b-tag Eigenvars L 13"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_14",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_14",      "b-tag Eigenvars L 14"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_15",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_15",      "b-tag Eigenvars L 15"    ],
+    ["weightSyswLum_bTagSF_77_eigenvars_Light_up_16",      "weightSyswLum_bTagSF_77_eigenvars_Light_down_16",      "b-tag Eigenvars L 16"    ],
+    ["weightSyswLum_bTagSF_77_extrapolation_from_charm_up","weightSyswLum_bTagSF_77_extrapolation_from_charm_down","b-tag extrap from charm" ],
+    ["weightSyswLum_bTagSF_77_extrapolation_up",           "weightSyswLum_bTagSF_77_extrapolation_down",           "b-tag extrap"            ]
+]
