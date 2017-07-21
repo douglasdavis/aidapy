@@ -171,7 +171,7 @@ def tree2hist(tree, hist_name, binning, var, cut, overflow=False, negatives_to_z
     """
     if not isinstance(tree, ROOT.TTree):
         raise TypeError('Must be ROOT TTree or TChain')
-    ROOT.TH1.SetDefaultSumw2()
+    #ROOT.TH1.SetDefaultSumw2() hist with weights != 1 are automatically Sumw2'ed
     bin_str  = '('+str(binning[0])+','+str(binning[1])+','+str(binning[2])+')'
 
     # if the tree/chain is empty, just make an empty histogram.
@@ -304,17 +304,17 @@ def np_hist(dataset, var, binning, selection, weight, lumi=36.1, shift_overflow=
         The statistical error in each bin
     """
     x = getattr(dataset,var)[selection]
-    w = getattr(dataset,weight)[selection]
+    w = getattr(dataset,weight)[selection]*lumi
     bins = np.linspace(binning[1],binning[2],binning[0]+1)
     ofbs = np.array([binning[2],1.0e6],dtype=np.float32)
 
-    h, bins = np.histogram(x,bins=bins,weights=w*lumi)
-    of, trh = np.histogram(x,bins=ofbs,weights=w*lumi)
+    h, bins = np.histogram(x,bins=bins,weights=w)
+    of, trh = np.histogram(x,bins=ofbs,weights=w)
     h[-1] += of[0]
 
     digitized = np.digitize(x,bins)
     digiti_of = np.digitize(x,ofbs)
-    bin_sumw2 = np.zeros(binning[0])
+    bin_sumw2 = np.zeros(binning[0],dtype=w.dtype)
     for i in range(1,binning[0]+1):
         bin_sumw2[i-1] = sum(np.power(w[np.where(digitized==i)[0]],2))
     bin_sumw2[-1] += sum(np.power(w[np.where(digiti_of==1)[0]],2))
