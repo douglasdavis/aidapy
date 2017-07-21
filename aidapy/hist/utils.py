@@ -2,6 +2,23 @@ import numpy as np
 import ROOT
 import math
 
+def bin_centers(arr):
+    """
+    Get the middle values of an array of bin edges
+
+    Parameters
+    ----------
+    arr: numpy.ndarray
+         The array of bin edges
+
+    Returns
+    -------
+    numpy.ndarray
+         The array of centers
+    """
+    return (np.delete(arr,[0])-(np.ediff1d(arr)/2.0))
+
+
 def hist2array(hist, include_overflow=False, copy=True, return_edges=False, return_err=False):
     """
     This algorithm is Copyright (c) 2012-2017, The root_numpy developers
@@ -208,3 +225,98 @@ def fast2full(root_file, faststr, fullstr, fast_nom, pnom, fast_nom_e, pnom_err,
     full_e_term += np.power(pnom*fast_a/(fast_nom*fast_nom)*fast_nom_e,2)
     full_h       = array2hist(full_a, fullstr, bins, errors=np.sqrt(full_e_term))
     return full_h
+
+def np_selection(x, tcut):
+    """
+    Parse a ROOT TCut style string and construct a
+    numpy array for selection (numpy array of bools)
+
+    Parameters
+    ----------
+    x: np.array
+        The numpy array for the set of events
+    tcut: str
+        The ROOT style TCut. This is a limited cut
+        that can only interpret "&&" combinations.
+
+    Returns
+    -------
+    np.array
+        The selection array of bools
+    """
+    if not isinstance(x,np.ndarray):
+        raise TypeError('x must be a numpy array!')
+    if not isinstance(tcut,str):
+        raise TypeError('cuts must be a string!')
+    cuts = tcut.split(tcut[tcut.find('&&')])
+    while '' in cuts:
+        cuts.remove('')
+
+    sel = np.array([True for _ in range(x.shape[0])])
+    for c in cuts:
+        if '==' in c:
+            cc = c.split('==')
+            sel = (sel)&(getattr(x,cc[0])==float(cc[1]))
+        elif '!=' in c:
+            cc = c.split('!=')
+            sel = (sel)&(getattr(x,cc[0])!=float(cc[1]))
+        elif '>=' in c:
+            cc = c.split('>=')
+            sel = (sel)&(getattr(x,cc[0])>=float(cc[1]))
+        elif '<=' in c:
+            cc = c.split('<=')
+            sel = (sel)&(getattr(x,cc[0])<=float(cc[1]))
+        elif '!' in c:
+            cc = c.split('!')
+            sel = (sel)&(getattr(x,cc[1])==False)
+        else:
+            sel = (sel)&(getattr(x,c)==True)
+    return sel
+
+def np_hist(dataset, var, binning, selection, weight, lumi=36.1, shift_overflow=True):
+    """
+    Create a histogram from purely numpy stored event data
+
+    Parameters
+    ----------
+    dataset: numpy.ndarray (recarray)
+        The numpy recarray for the dataset
+    var: str
+        The variable name that we're histogramming
+    binning: tuple
+        A tuple of (nbins, xmin, xmax)
+    selection: np.ndarray (of bools)
+        A numpy array of bools for event selection
+    weight: str
+        The weight variable in the dataset to use
+    lumi: float
+        The luminosity to scale to
+    shift_overflow: bool
+        Bring the overflow into the last real bin.
+
+    Returns
+    -------
+    numpy.ndarray
+        The bin heights
+    numpy.ndarray
+        The bin edges
+    numpy.ndarray
+        The statistical error in each bin
+    """
+    x = getattr(dataset,var)[selection]
+    w = getattr(dataset,weight)[selection]
+    bins = np.linspace(binning[1],binning[2],binning[0]+1)
+    ofbs = np.array([binning[2],1.0e6],dtype=np.float32)
+
+    h, bins = np.histogram(x,bins=bins,weights=w*lumi)
+    of, trh = np.histogram(x,bins=ofbs,weights=w*lumi)
+    h[-1] += of[0]
+
+    digitized = np.digitize(x,bins)
+    digiti_of = np.digitize(x,ofbs)
+    bin_sumw2 = np.zeros(binning[0])
+    for i in range(1,binning[0]+1):
+        bin_sumw2[i-1] = sum(np.power(w[np.where(digitized==i)[0]],2))
+    bin_sumw2[-1] += sum(np.power(w[np.where(digiti_of==1)[0]],2))
+    err = np.sqrt(bin_sumw2)
+    return h, bins, err
