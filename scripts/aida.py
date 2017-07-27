@@ -22,6 +22,8 @@ parser.add_argument('-o','--out-file',type=str,dest='out_file',default='aida_his
                     help='Name of output file')
 parser.add_argument('-s','--split-for-fit',dest='split_for_fit',nargs='+',type=str,
                     help='Run the aidapy.fit.split4fit function with given histogram names')
+parser.add_argument('-n','--np-gen',dest='np_gen',action='store_true',
+                    help='Flag to generate hists with numpy')
 
 args = parser.parse_args()
 if len(sys.argv) < 2:
@@ -35,7 +37,7 @@ import yaml
 import ROOT
 
 if args.gen_hists:
-    aph.generate_hists(args.yaml_config, output=args.out_file)
+    aph.generate_hists(args.yaml_config, output=args.out_file, numpy=args.np_gen)
 
 if args.gen_plots:
     if len(args.gen_plots) == 1 and '.yaml' in args.gen_plots[0]:
