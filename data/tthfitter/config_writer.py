@@ -27,6 +27,8 @@ print('  SystControlPlots: TRUE', file=f)
 print('  DebugLevel: 1', file=f)
 print('  SystPruningShape: .001', file=f)
 print('  SystPruningNorm: .001', file=f)
+print('  RankingMaxNP: 20', file=f)
+print('  RankingPlot: Systs', file=f)
 print('', file=f)
 
 print('Fit: "fit"', file=f)
