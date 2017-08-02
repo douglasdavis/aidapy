@@ -1,5 +1,5 @@
 """
-Module for generating and manipulation histograms for AIDA
+Module for generating and manipulating histograms for AIDA
 """
 
 from .utils import bin_centers
