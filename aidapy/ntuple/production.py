@@ -16,7 +16,8 @@ aidapydir = str(os.getenv('AIDAPYDIR'))
 yaml_file = aidapydir+'/data/production.yaml'
 with open(yaml_file) as f:
     yaml_top = yaml.load(f)
-atndir='/data/dukhep09/b/users/ddavis/top/at/v2430/mc/user.ddavis.'
+#atndir='/data/dukhep09/b/users/ddavis/top/at/v2430/mc/user.ddavis.'
+atndir='/var/phy/project/hep/atlas/users/drd25/ntuples/aida/ato/mc/user.ddavis.'
 
 def command(dsid='', tree_name='', out_file='', out_tree='', is_fast=False):
     base   = 'runAIDALoop --loop-alg --no-ttrv-warning -a '+atndir
@@ -88,11 +89,27 @@ def runAIDALoop(tree_name, dry=False):
         subprocess.call('echo "'+com+'"',shell=True)
         subprocess.call(com,shell=True)
 
+def runData():
+    datadir = '/var/phy/project/hep/atlas/users/drd25/ntuples/aida/ato/data'
+    datalst = os.listdir(datadir)
+    for dl in datalst:
+        indir = datadir+'/'+dl
+        outnl = indir.split('/')[-1].split('.')
+        outn  = outnl[2]+'.'+outnl[5]+'.root'
+        command = 'runAIDALoop --loop-alg --is-data -a '+indir+' -o outs2/' + outn
+        subprocess.call('echo "'+command+'"',shell=True)
+        subprocess.call(command,shell=True)
+
 def main(args):
-    runAIDALoop('nominal',dry=('dry' in args))
-    if 'systematics' in args:
-        for sys in apm._systematic_trees:
-            runAIDALoop(sys,dry=('dry' in args))
+    if 'data' in args:
+        runData()
+        exit('Done')
+    else:
+        runAIDALoop('nominal',dry=('dry' in args))
+        if 'systematics' in args:
+            for sys in apm._systematic_trees:
+                runAIDALoop(sys,dry=('dry' in args))
+        exit('Done')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
